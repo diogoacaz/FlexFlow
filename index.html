@@ -1262,6 +1262,12 @@ function buildRelatorioCharts(){
 }
 
 window.addEventListener('DOMContentLoaded',async ()=>{
+  // Garantir que o usuário admin padrão existe
+  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
+  if(!users['admin']){
+    users['admin']={hash:'8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'};
+    localStorage.setItem('ff_users',JSON.stringify(users));
+  }
   // Restore session from localStorage (persists across browser restarts)
   const saved=localStorage.getItem('ff_current_user');
   if(saved){await startSession(saved);}
