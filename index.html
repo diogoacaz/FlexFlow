@@ -470,7 +470,10 @@
     <div class="modal-title">Novo aluno</div>
     <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="in-nome" placeholder="Nome do aluno"></div><div class="fg"><label class="fl">Telefone</label><input class="fi" id="in-tel" placeholder="(21) 99999-9999"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">CPF</label><input class="fi" id="in-cpf" placeholder="000.000.000-00"></div><div class="fg"><label class="fl">E-mail</label><input class="fi" id="in-email" placeholder="email@exemplo.com" type="email"></div></div>
-    <div class="fg"><label class="fl">Endereço</label><input class="fi" id="in-endereco" placeholder="Rua, número, bairro, cidade"></div>
+    <div class="fr2"><div class="fg"><label class="fl">CEP</label><input class="fi" id="in-cep" placeholder="00000-000"></div><div class="fg"><label class="fl">Estado</label><input class="fi" id="in-estado" placeholder="SP"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Município</label><input class="fi" id="in-municipio" placeholder="São Paulo"></div><div class="fg"><label class="fl">Bairro</label><input class="fi" id="in-bairro" placeholder="Centro"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="in-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="in-numero" placeholder="123"></div></div>
+    <div class="fg"><label class="fl">Complemento</label><input class="fi" id="in-complemento" placeholder="Apto, Bloco, Sala..."></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
     <div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-aluno')">Cancelar</button><button class="btn btn-p" onclick="addAluno()">Cadastrar aluno</button></div>
@@ -483,7 +486,10 @@
     <input type="hidden" id="ed-idx">
     <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="ed-nome" placeholder="Nome do aluno"></div><div class="fg"><label class="fl">Telefone</label><input class="fi" id="ed-tel" placeholder="(21) 99999-9999"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">CPF</label><input class="fi" id="ed-cpf" placeholder="000.000.000-00"></div><div class="fg"><label class="fl">E-mail</label><input class="fi" id="ed-email" placeholder="email@exemplo.com" type="email"></div></div>
-    <div class="fg"><label class="fl">Endereço</label><input class="fi" id="ed-endereco" placeholder="Rua, número, bairro, cidade"></div>
+    <div class="fr2"><div class="fg"><label class="fl">CEP</label><input class="fi" id="ed-cep" placeholder="00000-000"></div><div class="fg"><label class="fl">Estado</label><input class="fi" id="ed-estado" placeholder="SP"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Município</label><input class="fi" id="ed-municipio" placeholder="São Paulo"></div><div class="fg"><label class="fl">Bairro</label><input class="fi" id="ed-bairro" placeholder="Centro"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="ed-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="ed-numero" placeholder="123"></div></div>
+    <div class="fg"><label class="fl">Complemento</label><input class="fi" id="ed-complemento" placeholder="Apto, Bloco, Sala..."></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-aluno')">Cancelar</button><button class="btn btn-p" onclick="saveEditAluno()">Salvar alterações</button></div>
   </div>
@@ -525,6 +531,17 @@
     <div class="fg"><label class="fl">Descrição</label><input class="fi" id="in-lanc-desc" placeholder="Ex: Mensalidade, Aluguel..."></div>
     <div class="fg"><label class="fl">Data</label><input class="fi" id="in-lanc-data" type="date"></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-lancamento')">Cancelar</button><button class="btn btn-p" onclick="addLancamento()">Adicionar</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-editar-lancamento">
+  <div class="modal">
+    <div class="modal-title">Editar lançamento</div>
+    <input type="hidden" id="el-idx">
+    <div class="fr2"><div class="fg"><label class="fl">Tipo</label><select class="fi" id="el-tipo"><option>Receita</option><option>Despesa</option></select></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="el-valor" type="number" placeholder="0"></div></div>
+    <div class="fg"><label class="fl">Descrição</label><input class="fi" id="el-desc" placeholder="Ex: Mensalidade, Aluguel..."></div>
+    <div class="fg"><label class="fl">Data</label><input class="fi" id="el-data" type="date"></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-editar-lancamento')">Cancelar</button><button class="btn btn-p" onclick="saveEditLancamento()">Salvar alterações</button></div>
   </div>
 </div>
 
@@ -716,14 +733,55 @@ function filterPag(f,btn){
 }
 
 function renderFluxo(){
-  document.getElementById('fluxo-list').innerHTML=fluxo.map(f=>`
+  document.getElementById('fluxo-list').innerHTML=fluxo.map((f,i)=>`
     <div class="fe">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:11px;color:var(--text-secondary);min-width:40px;">${f.data}</span>
-        <span>${f.desc}</span>
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <span style="font-size:11px;color:var(--text-secondary);flex-shrink:0;min-width:40px;">${f.data}</span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.desc}</span>
       </div>
-      <span class="${f.tipo==='income'?'inc':'exp'}">${f.valor}</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:10px;">
+        <span class="${f.tipo==='income'?'inc':'exp'}">${f.valor}</span>
+        <button class="btn" style="font-size:11px;padding:3px 8px;" onclick="editarLancamento(${i})">Editar</button>
+        <button class="btn btn-d" style="font-size:11px;padding:3px 8px;" onclick="excluirLancamento(${i})">Excluir</button>
+      </div>
     </div>`).join('');
+}
+
+function editarLancamento(idx){
+  const f=fluxo[idx];
+  document.getElementById('el-idx').value=idx;
+  document.getElementById('el-tipo').value=f.tipo==='income'?'Receita':'Despesa';
+  const rawVal=parseFloat(f.valor.replace(/[^0-9,]/g,'').replace(',','.'))||0;
+  document.getElementById('el-valor').value=rawVal;
+  document.getElementById('el-desc').value=f.desc;
+  document.getElementById('el-data').value=f.dataRaw||'';
+  openModal('modal-editar-lancamento');
+}
+
+function saveEditLancamento(){
+  const idx=parseInt(document.getElementById('el-idx').value);
+  const tipo=document.getElementById('el-tipo').value==='Receita'?'income':'expense';
+  const valor=parseFloat(document.getElementById('el-valor').value)||0;
+  const desc=document.getElementById('el-desc').value.trim();
+  const dataRaw=document.getElementById('el-data').value;
+  if(!desc||!valor){alert('Preencha descrição e valor.');return;}
+  const sinal=tipo==='income'?'+':'-';
+  let dataFmt=fluxo[idx].data;
+  if(dataRaw){
+    const d=new Date(dataRaw+'T00:00:00');
+    dataFmt=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  }
+  fluxo[idx]={desc,tipo,valor:sinal+'R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:dataRaw||fluxo[idx].dataRaw||''};
+  save();
+  renderFluxo();
+  closeModal('modal-editar-lancamento');
+}
+
+function excluirLancamento(idx){
+  if(!confirm('Excluir este lançamento?\nEsta ação não pode ser desfeita.'))return;
+  fluxo.splice(idx,1);
+  save();
+  renderFluxo();
 }
 
 const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','notificacoes','exportar'];
@@ -748,7 +806,13 @@ function addAluno(){
   const tel=document.getElementById('in-tel').value.trim();
   const cpf=document.getElementById('in-cpf').value.trim();
   const email=document.getElementById('in-email').value.trim();
-  const endereco=document.getElementById('in-endereco').value.trim();
+  const cep=document.getElementById('in-cep').value.trim();
+  const logradouro=document.getElementById('in-logradouro').value.trim();
+  const numero=document.getElementById('in-numero').value.trim();
+  const complemento=document.getElementById('in-complemento').value.trim();
+  const estado=document.getElementById('in-estado').value.trim();
+  const municipio=document.getElementById('in-municipio').value.trim();
+  const bairro=document.getElementById('in-bairro').value.trim();
   const planoRaw=document.getElementById('in-plano').value;
   const prof=document.getElementById('in-prof').value;
   const inicio=document.getElementById('in-inicio').value;
@@ -764,13 +828,13 @@ function addAluno(){
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   }
   const valor=planoPrices[plano]||350;
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,endereco,hist:[]});
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,hist:[]});
   pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
   renderPagamentos(pagamentos);
   updateDashboard();
-  ['in-nome','in-tel','in-cpf','in-email','in-endereco','in-inicio'].forEach(id=>document.getElementById(id).value='');
+  ['in-nome','in-tel','in-cpf','in-email','in-cep','in-logradouro','in-numero','in-complemento','in-estado','in-municipio','in-bairro','in-inicio'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-aluno');
 }
 
@@ -781,7 +845,13 @@ function editarAluno(idx){
   document.getElementById('ed-tel').value=a.tel||'';
   document.getElementById('ed-cpf').value=a.cpf||'';
   document.getElementById('ed-email').value=a.email||'';
-  document.getElementById('ed-endereco').value=a.endereco||'';
+  document.getElementById('ed-cep').value=a.cep||'';
+  document.getElementById('ed-logradouro').value=a.logradouro||'';
+  document.getElementById('ed-numero').value=a.numero||'';
+  document.getElementById('ed-complemento').value=a.complemento||'';
+  document.getElementById('ed-estado').value=a.estado||'';
+  document.getElementById('ed-municipio').value=a.municipio||'';
+  document.getElementById('ed-bairro').value=a.bairro||'';
   document.getElementById('ed-plano').value=a.plano;
   document.getElementById('ed-prof').value=a.prof;
   openModal('modal-editar-aluno');
@@ -797,7 +867,13 @@ function saveEditAluno(){
   a.tel=document.getElementById('ed-tel').value.trim();
   a.cpf=document.getElementById('ed-cpf').value.trim();
   a.email=document.getElementById('ed-email').value.trim();
-  a.endereco=document.getElementById('ed-endereco').value.trim();
+  a.cep=document.getElementById('ed-cep').value.trim();
+  a.logradouro=document.getElementById('ed-logradouro').value.trim();
+  a.numero=document.getElementById('ed-numero').value.trim();
+  a.complemento=document.getElementById('ed-complemento').value.trim();
+  a.estado=document.getElementById('ed-estado').value.trim();
+  a.municipio=document.getElementById('ed-municipio').value.trim();
+  a.bairro=document.getElementById('ed-bairro').value.trim();
   a.plano=document.getElementById('ed-plano').value;
   a.prof=document.getElementById('ed-prof').value;
   const partes=nome.split(' ');
@@ -856,7 +932,7 @@ function addLancamento(){
   const d=new Date(data+'T00:00:00');
   const dataFmt=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   const sinal=tipo==='income'?'+':'-';
-  fluxo.unshift({desc,tipo,valor:sinal+'R$ '+valor.toLocaleString('pt-BR'),data:dataFmt});
+  fluxo.unshift({desc,tipo,valor:sinal+'R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:data});
   save();
   renderFluxo();
   ['in-lanc-valor','in-lanc-desc','in-lanc-data'].forEach(id=>document.getElementById(id).value='');
