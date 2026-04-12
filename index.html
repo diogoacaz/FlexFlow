@@ -112,13 +112,44 @@
   .fr2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .ma { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
   .feedback { padding: 12px 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; margin-top: 12px; }
-  @media (max-width: 700px) {
-    .sidebar { width: 52px; }
-    .ni span:not(.ni-icon):not(.notif-dot) { display: none; }
-    .logo-s { display: none; }
-    .g4 { grid-template-columns: repeat(2, 1fr); }
-    .g3 { grid-template-columns: repeat(2, 1fr); }
-    .g2 { grid-template-columns: 1fr; }
+  /* Bottom navigation (mobile only) */
+  .bnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-primary); border-top: 0.5px solid var(--border); z-index: 100; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .bnav::-webkit-scrollbar { display: none; }
+  .bn { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 66px; padding: 8px 8px 12px; color: var(--text-secondary); cursor: pointer; gap: 3px; user-select: none; position: relative; }
+  .bn.active { color: var(--text-info); }
+  .bn-ic { font-size: 17px; line-height: 1; }
+  .bn-lb { font-size: 10px; white-space: nowrap; }
+  .bn .notif-dot { position: absolute; top: 6px; right: 14px; }
+  @media (max-width: 640px) {
+    body { height: auto; min-height: 100svh; overflow-y: auto; padding-bottom: 64px; }
+    .app { height: auto; overflow: visible; }
+    .sidebar { display: none; }
+    .main { height: auto; overflow: visible; }
+    .content { overflow-y: visible; padding: 12px 12px 16px; }
+    .topbar { padding: 11px 14px; }
+    .topbar-actions { display: none; }
+    .bnav { display: flex; }
+    .g4 { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+    .g3 { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+    .g2 { grid-template-columns: 1fr; gap: 10px; margin-bottom: 14px; }
+    .card { padding: 14px; }
+    .mc { padding: 12px 14px; }
+    .fr2 { grid-template-columns: 1fr; }
+    .si { width: 100% !important; }
+    .tab-btns { flex-wrap: wrap; }
+    .export-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .hist-line { flex-wrap: wrap; gap: 4px; }
+    /* Hide less important columns on mobile */
+    #tbl-alunos th:nth-child(2), #tbl-alunos td:nth-child(2),
+    #tbl-alunos th:nth-child(3), #tbl-alunos td:nth-child(3),
+    #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
+    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
+    #tbl-pagamentos th:nth-child(2), #tbl-pagamentos td:nth-child(2),
+    #tbl-pagamentos th:nth-child(4), #tbl-pagamentos td:nth-child(4),
+    #tbl-pagamentos th:nth-child(6), #tbl-pagamentos td:nth-child(6) { display: none; }
+    /* Modal as bottom sheet */
+    .overlay.open { align-items: flex-end; }
+    .modal { width: 100%; max-width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 20px 16px 28px; }
   }
 </style>
 </head>
@@ -206,7 +237,7 @@
           <button class="btn btn-p" onclick="openModal('modal-aluno')">+ Novo aluno</button>
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
-          <table class="tbl">
+          <table class="tbl" id="tbl-alunos">
             <thead><tr><th style="width:22%">Aluno</th><th style="width:13%">Plano</th><th style="width:17%">Professor</th><th style="width:11%">Vencimento</th><th style="width:10%">Status</th><th style="width:11%">Histórico</th><th style="width:16%">Ações</th></tr></thead>
             <tbody id="alunos-body"></tbody>
           </table>
@@ -272,7 +303,7 @@
           <button class="btn btn-p" onclick="openModal('modal-pagamento')">+ Registrar pagamento</button>
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
-          <table class="tbl">
+          <table class="tbl" id="tbl-pagamentos">
             <thead><tr><th style="width:20%">Aluno</th><th style="width:17%">Plano</th><th style="width:11%">Valor</th><th style="width:12%">Vencimento</th><th style="width:10%">Status</th><th style="width:14%">Forma pag.</th><th style="width:16%">Ação</th></tr></thead>
             <tbody id="pagamentos-body"></tbody>
           </table>
@@ -602,8 +633,10 @@ const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo'
 function showPage(p){
   pages.forEach(x=>document.getElementById('page-'+x).classList.toggle('hidden',x!==p));
   document.querySelectorAll('.ni').forEach((el,i)=>el.classList.toggle('active',navPages[i]===p));
+  document.querySelectorAll('.bn').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
   document.getElementById('topbar-title').textContent=titles[p]||p;
   if(p==='relatorios')setTimeout(buildRelatorioCharts,150);
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function openModal(id){document.getElementById(id).classList.add('open');}
@@ -783,5 +816,18 @@ window.addEventListener('DOMContentLoaded',()=>{
   new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:['Mensal','Trimestral','Semestral'],datasets:[{data:[22,10,6],backgroundColor:['#378ADD','#7F77DD','#1D9E75'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 });
 </script>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bnav" id="bnav">
+  <div class="bn active" data-page="dashboard" onclick="showPage('dashboard')"><div class="bn-ic">&#9638;</div><div class="bn-lb">Dashboard</div></div>
+  <div class="bn" data-page="alunos" onclick="showPage('alunos')"><div class="bn-ic">&#9673;</div><div class="bn-lb">Alunos</div></div>
+  <div class="bn" data-page="pagamentos" onclick="showPage('pagamentos')"><div class="bn-ic">&#9672;</div><div class="bn-lb">Pagamentos</div></div>
+  <div class="bn" data-page="fluxo" onclick="showPage('fluxo')"><div class="bn-ic">&#8779;</div><div class="bn-lb">Fluxo</div></div>
+  <div class="bn" data-page="professores" onclick="showPage('professores')"><div class="bn-ic">&#9678;</div><div class="bn-lb">Professores</div></div>
+  <div class="bn" data-page="planos" onclick="showPage('planos')"><div class="bn-ic">&#9635;</div><div class="bn-lb">Planos</div></div>
+  <div class="bn" data-page="relatorios" onclick="showPage('relatorios')"><div class="bn-ic">&#8801;</div><div class="bn-lb">Relatórios</div></div>
+  <div class="bn" data-page="notificacoes" onclick="showPage('notificacoes')"><div class="bn-ic">&#8853;</div><div class="bn-lb">Alertas</div><span class="notif-dot"></span></div>
+  <div class="bn" data-page="exportar" onclick="showPage('exportar')"><div class="bn-ic">&#8595;</div><div class="bn-lb">Exportar</div></div>
+</nav>
 </body>
 </html>
