@@ -282,12 +282,7 @@
         <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
           <button class="btn btn-p" onclick="openModal('modal-professor')">+ Novo professor</button>
         </div>
-        <div class="g2">
-          <div class="card"><div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;"><div class="av av-b">MS</div><div><div style="font-size:14px;font-weight:600;">Mariana Silva</div><div style="font-size:11px;color:var(--text-secondary);">Instrutora sênior</div></div><span class="badge bg" style="margin-left:auto;">Ativa</span></div><div style="font-size:12px;color:var(--text-secondary);">Pilates solo e aparelhos</div><hr class="divider"><div style="display:flex;justify-content:space-between;font-size:13px;"><span>Alunos</span><strong>14</strong></div><div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px;"><span>Aulas/semana</span><strong>18</strong></div></div>
-          <div class="card"><div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;"><div class="av av-t">LF</div><div><div style="font-size:14px;font-weight:600;">Lucas Ferreira</div><div style="font-size:11px;color:var(--text-secondary);">Instrutor</div></div><span class="badge bg" style="margin-left:auto;">Ativo</span></div><div style="font-size:12px;color:var(--text-secondary);">Pilates clínico e reabilitação</div><hr class="divider"><div style="display:flex;justify-content:space-between;font-size:13px;"><span>Alunos</span><strong>11</strong></div><div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px;"><span>Aulas/semana</span><strong>14</strong></div></div>
-          <div class="card"><div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;"><div class="av av-p">JR</div><div><div style="font-size:14px;font-weight:600;">Juliana Ramos</div><div style="font-size:11px;color:var(--text-secondary);">Instrutora</div></div><span class="badge bg" style="margin-left:auto;">Ativa</span></div><div style="font-size:12px;color:var(--text-secondary);">Pilates para gestantes</div><hr class="divider"><div style="display:flex;justify-content:space-between;font-size:13px;"><span>Alunos</span><strong>8</strong></div><div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px;"><span>Aulas/semana</span><strong>10</strong></div></div>
-          <div class="card"><div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;"><div class="av av-c">RD</div><div><div style="font-size:14px;font-weight:600;">Rafael Duarte</div><div style="font-size:11px;color:var(--text-secondary);">Instrutor</div></div><span class="badge ba" style="margin-left:auto;">Férias</span></div><div style="font-size:12px;color:var(--text-secondary);">Pilates funcional e esportivo</div><hr class="divider"><div style="display:flex;justify-content:space-between;font-size:13px;"><span>Alunos</span><strong>5</strong></div><div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px;"><span>Aulas/semana</span><strong>0 (férias)</strong></div></div>
-        </div>
+        <div class="g2" id="professores-grid"></div>
       </div>
 
       <!-- PLANOS -->
@@ -295,33 +290,7 @@
         <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
           <button class="btn btn-p" onclick="openModal('modal-plano')">+ Novo plano</button>
         </div>
-        <div class="g3">
-          <div class="card" style="border:2px solid #378add;">
-            <div class="badge bb" style="margin-bottom:10px;">Mais popular</div>
-            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Plano mensal</div>
-            <div style="font-size:22px;font-weight:600;margin-bottom:8px;">R$ 350<span style="font-size:13px;font-weight:400;color:var(--text-secondary);">/mês</span></div>
-            <hr class="divider">
-            <div style="font-size:12px;color:var(--text-secondary);line-height:1.9;">2x por semana · 8 aulas/mês<br>Sem fidelidade</div>
-            <hr class="divider">
-            <div style="font-size:12px;color:var(--text-secondary);">22 alunos ativos</div>
-          </div>
-          <div class="card">
-            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Plano trimestral</div>
-            <div style="font-size:22px;font-weight:600;margin-bottom:8px;">R$ 900<span style="font-size:13px;font-weight:400;color:var(--text-secondary);">/3 meses</span></div>
-            <hr class="divider">
-            <div style="font-size:12px;color:var(--text-secondary);line-height:1.9;">2x por semana · 24 aulas<br>Economia de R$ 150</div>
-            <hr class="divider">
-            <div style="font-size:12px;color:var(--text-secondary);">10 alunos ativos</div>
-          </div>
-          <div class="card">
-            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Plano semestral</div>
-            <div style="font-size:22px;font-weight:600;margin-bottom:8px;">R$ 1.800<span style="font-size:13px;font-weight:400;color:var(--text-secondary);">/6 meses</span></div>
-            <hr class="divider">
-            <div style="font-size:12px;color:var(--text-secondary);line-height:1.9;">3x por semana · 72 aulas<br>Economia de R$ 300</div>
-            <hr class="divider">
-            <div style="font-size:12px;color:var(--text-secondary);">6 alunos ativos</div>
-          </div>
-        </div>
+        <div class="g3" id="planos-grid"></div>
       </div>
 
       <!-- PAGAMENTOS -->
@@ -401,38 +370,10 @@
 
       <!-- NOTIFICAÇÕES -->
       <div id="page-notificacoes" class="hidden">
-        <div class="g3">
-          <div class="mc"><div class="mc-label">Vencendo hoje/amanhã</div><div class="mc-val amber">2</div></div>
-          <div class="mc"><div class="mc-label">Em atraso</div><div class="mc-val red">1</div></div>
-          <div class="mc"><div class="mc-label">Vencendo em 7 dias</div><div class="mc-val">5</div></div>
-        </div>
+        <div class="g3" id="notif-metrics"></div>
         <div class="card">
           <div class="sec-title">Alertas ativos</div>
-          <div class="notif-item">
-            <div class="notif-icon" style="background:var(--bg-danger);color:var(--text-danger);">!</div>
-            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Patricia Nunes — pagamento atrasado</div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Plano mensal · Venceu em 07/05 · 3 dias em atraso</div></div>
-            <button class="btn btn-s" style="font-size:12px;">Marcar pago</button>
-          </div>
-          <div class="notif-item">
-            <div class="notif-icon" style="background:var(--bg-warning);color:var(--text-warning);">!</div>
-            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Carlos Souza — vencimento amanhã</div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Plano mensal · Vence em 12/05</div></div>
-            <button class="btn" style="font-size:12px;">Lembrete</button>
-          </div>
-          <div class="notif-item">
-            <div class="notif-icon" style="background:var(--bg-warning);color:var(--text-warning);">!</div>
-            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Juliana Castro — vencimento em 2 dias</div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Plano trimestral · Vence em 13/05</div></div>
-            <button class="btn" style="font-size:12px;">Lembrete</button>
-          </div>
-          <div class="notif-item">
-            <div class="notif-icon" style="background:var(--bg-success);color:var(--text-success);">&#10003;</div>
-            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Ana Lima — pagamento confirmado</div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Plano mensal · Pago em 10/05 via PIX</div></div>
-            <span class="badge bg">Pago</span>
-          </div>
-          <div class="notif-item">
-            <div class="notif-icon" style="background:var(--bg-success);color:var(--text-success);">&#10003;</div>
-            <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Beatriz Melo — pagamento confirmado</div><div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Plano mensal · Pago em 10/05 via cartão</div></div>
-            <span class="badge bg">Pago</span>
-          </div>
+          <div id="notif-list"></div>
         </div>
       </div>
 
@@ -498,18 +439,40 @@
 <div class="overlay" id="modal-professor">
   <div class="modal">
     <div class="modal-title">Novo professor</div>
-    <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" placeholder="Nome"></div><div class="fg"><label class="fl">Especialidade</label><input class="fi" placeholder="Ex: Pilates clínico"></div></div>
-    <div class="fr2"><div class="fg"><label class="fl">Telefone</label><input class="fi" placeholder="(21) 99999-9999"></div><div class="fg"><label class="fl">Status</label><select class="fi"><option>Ativo</option><option>Férias</option><option>Inativo</option></select></div></div>
-    <div class="ma"><button class="btn" onclick="closeModal('modal-professor')">Cancelar</button><button class="btn btn-p" onclick="closeModal('modal-professor')">Cadastrar professor</button></div>
+    <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="pf-nome" placeholder="Nome"></div><div class="fg"><label class="fl">Especialidade</label><input class="fi" id="pf-esp" placeholder="Ex: Pilates clínico"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Telefone</label><input class="fi" id="pf-tel" placeholder="(21) 99999-9999"></div><div class="fg"><label class="fl">Status</label><select class="fi" id="pf-status"><option>Ativo</option><option>Ativa</option><option>Férias</option><option>Inativo</option></select></div></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-professor')">Cancelar</button><button class="btn btn-p" onclick="addProfessor()">Cadastrar professor</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-editar-professor">
+  <div class="modal">
+    <div class="modal-title">Editar professor</div>
+    <input type="hidden" id="epf-idx">
+    <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="epf-nome" placeholder="Nome"></div><div class="fg"><label class="fl">Especialidade</label><input class="fi" id="epf-esp" placeholder="Ex: Pilates clínico"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Telefone</label><input class="fi" id="epf-tel" placeholder="(21) 99999-9999"></div><div class="fg"><label class="fl">Status</label><select class="fi" id="epf-status"><option>Ativo</option><option>Ativa</option><option>Férias</option><option>Inativo</option></select></div></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-editar-professor')">Cancelar</button><button class="btn btn-p" onclick="saveEditProfessor()">Salvar alterações</button></div>
   </div>
 </div>
 
 <div class="overlay" id="modal-plano">
   <div class="modal">
     <div class="modal-title">Novo plano</div>
-    <div class="fr2"><div class="fg"><label class="fl">Nome do plano</label><input class="fi" placeholder="Ex: Plano anual"></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" type="number" placeholder="0"></div></div>
-    <div class="fr2"><div class="fg"><label class="fl">Duração</label><select class="fi"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div class="fg"><label class="fl">Aulas/semana</label><input class="fi" type="number" placeholder="2"></div></div>
-    <div class="ma"><button class="btn" onclick="closeModal('modal-plano')">Cancelar</button><button class="btn btn-p" onclick="closeModal('modal-plano')">Criar plano</button></div>
+    <div class="fr2"><div class="fg"><label class="fl">Nome do plano</label><input class="fi" id="pl-nome" placeholder="Ex: Plano anual"></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="pl-valor" type="number" placeholder="0"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Duração</label><select class="fi" id="pl-dur"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div class="fg"><label class="fl">Aulas/semana</label><input class="fi" id="pl-aulas" type="number" placeholder="2"></div></div>
+    <div class="fg"><label class="fl">Descrição (opcional)</label><input class="fi" id="pl-desc" placeholder="Ex: 2x por semana · Sem fidelidade"></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-plano')">Cancelar</button><button class="btn btn-p" onclick="addPlano()">Criar plano</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-editar-plano">
+  <div class="modal">
+    <div class="modal-title">Editar plano</div>
+    <input type="hidden" id="epl-idx">
+    <div class="fr2"><div class="fg"><label class="fl">Nome do plano</label><input class="fi" id="epl-nome" placeholder="Ex: Plano anual"></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="epl-valor" type="number" placeholder="0"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Duração</label><select class="fi" id="epl-dur"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div class="fg"><label class="fl">Aulas/semana</label><input class="fi" id="epl-aulas" type="number" placeholder="2"></div></div>
+    <div class="fg"><label class="fl">Descrição (opcional)</label><input class="fi" id="epl-desc" placeholder="Ex: 2x por semana · Sem fidelidade"></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-editar-plano')">Cancelar</button><button class="btn btn-p" onclick="saveEditPlano()">Salvar alterações</button></div>
   </div>
 </div>
 
@@ -545,6 +508,18 @@
   </div>
 </div>
 
+<div class="overlay" id="modal-editar-pagamento">
+  <div class="modal">
+    <div class="modal-title">Editar pagamento</div>
+    <input type="hidden" id="ep-idx">
+    <div class="fg"><label class="fl">Aluno</label><input class="fi" id="ep-aluno" readonly style="background:var(--bg-secondary);"></div>
+    <div class="fr2"><div class="fg"><label class="fl">Plano</label><input class="fi" id="ep-plano"></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="ep-valor" type="number"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Vencimento</label><input class="fi" id="ep-venc" type="date"></div><div class="fg"><label class="fl">Forma de pagamento</label><select class="fi" id="ep-forma"><option>PIX</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Dinheiro</option><option>Transferência</option><option>—</option></select></div></div>
+    <div class="fg"><label class="fl">Status</label><select class="fi" id="ep-status"><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="atrasado">Atrasado</option></select></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-editar-pagamento')">Cancelar</button><button class="btn btn-p" onclick="saveEditPagamento()">Salvar alterações</button></div>
+  </div>
+</div>
+
 <script>
 const defaultAlunos=[
   {nome:'Ana Lima',ini:'AL',cor:'av-b',plano:'Mensal',prof:'Mariana Silva',venc:'10/06',status:'pago',hist:[{mes:'Jan',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Fev',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mar',val:'R$ 350',forma:'Cartão',st:'pago'},{mes:'Abr',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mai',val:'R$ 350',forma:'PIX',st:'pago'}]},
@@ -576,13 +551,27 @@ const defaultFluxo=[
   {desc:'Mensalidades em lote — 7 alunos',tipo:'income',valor:'+R$ 7.650',data:'18/05'},
 ];
 
-let alunos=[], pagamentos=[], fluxo=[], currentUser=null;
+const defaultProfessores=[
+  {nome:'Mariana Silva',esp:'Instrutora sênior · Pilates solo e aparelhos',tel:'',status:'Ativa'},
+  {nome:'Lucas Ferreira',esp:'Instrutor · Pilates clínico e reabilitação',tel:'',status:'Ativo'},
+  {nome:'Juliana Ramos',esp:'Instrutora · Pilates para gestantes',tel:'',status:'Ativa'},
+  {nome:'Rafael Duarte',esp:'Instrutor · Pilates funcional e esportivo',tel:'',status:'Férias'},
+];
+const defaultPlanos=[
+  {nome:'Plano mensal',valor:350,duracao:'Mensal',aulasSemanais:2,desc:'2x por semana · 8 aulas/mês\nSem fidelidade'},
+  {nome:'Plano trimestral',valor:900,duracao:'Trimestral',aulasSemanais:2,desc:'2x por semana · 24 aulas\nEconomia de R$ 150'},
+  {nome:'Plano semestral',valor:1800,duracao:'Semestral',aulasSemanais:3,desc:'3x por semana · 72 aulas\nEconomia de R$ 300'},
+];
+
+let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null;
 
 function save(){
   if(!currentUser)return;
   localStorage.setItem('ff_alunos_'+currentUser,JSON.stringify(alunos));
   localStorage.setItem('ff_pagamentos_'+currentUser,JSON.stringify(pagamentos));
   localStorage.setItem('ff_fluxo_'+currentUser,JSON.stringify(fluxo));
+  localStorage.setItem('ff_professores_'+currentUser,JSON.stringify(professores));
+  localStorage.setItem('ff_planos_'+currentUser,JSON.stringify(planos));
 }
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
@@ -610,9 +599,14 @@ function startSession(username){
   alunos=JSON.parse(localStorage.getItem('ff_alunos_'+username))||defaultAlunos;
   pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+username))||defaultPagamentos;
   fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+username))||defaultFluxo;
+  professores=JSON.parse(localStorage.getItem('ff_professores_'+username))||defaultProfessores;
+  planos=JSON.parse(localStorage.getItem('ff_planos_'+username))||defaultPlanos;
+  renderProfessores();
+  renderPlanos();
   renderAlunos(alunos);
   renderPagamentos(pagamentos);
   renderFluxo();
+  renderNotificacoes();
   updateDashboard();
 }
 function logout(){
@@ -704,7 +698,11 @@ function renderPagamentos(lista){
       <td>${p.aluno}</td><td>${p.plano}</td><td>${p.valor}</td><td>${p.venc}</td>
       <td><span class="badge ${p.status==='pago'?'bg':p.status==='pendente'?'ba':'br'}">${p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado'}</span></td>
       <td>${p.forma}</td>
-      <td>${p.status!=='pago'?`<button class="btn btn-s" style="font-size:12px;padding:4px 10px;" onclick="marcarPago(${ri})">Marcar pago</button>`:''}</td>
+      <td style="white-space:nowrap;">
+        ${p.status!=='pago'?`<button class="btn btn-s" style="font-size:11px;padding:3px 7px;" onclick="marcarPago(${ri})">Pago</button> `:''}
+        <button class="btn" style="font-size:11px;padding:3px 7px;" onclick="editarPagamento(${ri})">Editar</button>
+        <button class="btn btn-d" style="font-size:11px;padding:3px 7px;margin-left:3px;" onclick="excluirPagamento(${ri})">Excluir</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -722,6 +720,7 @@ function marcarPago(idx){
   save();
   filterPag(currentPagFilter);
   renderAlunos(alunos);
+  renderNotificacoes();
   updateDashboard();
 }
 
@@ -794,6 +793,9 @@ function showPage(p){
   document.querySelectorAll('.bn').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
   document.getElementById('topbar-title').textContent=titles[p]||p;
   if(p==='relatorios')setTimeout(buildRelatorioCharts,150);
+  if(p==='professores')renderProfessores();
+  if(p==='planos')renderPlanos();
+  if(p==='notificacoes')renderNotificacoes();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -939,6 +941,231 @@ function addLancamento(){
   closeModal('modal-lancamento');
 }
 
+// ── PROFESSORES ──────────────────────────────────────────────────────────────
+const avCoresList=['av-b','av-t','av-p','av-c'];
+function syncProfSelects(){
+  const opts=professores.map(p=>`<option>${p.nome}</option>`).join('');
+  ['in-prof','ed-prof'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+function renderProfessores(){
+  const grid=document.getElementById('professores-grid');
+  if(!grid)return;
+  grid.innerHTML=professores.map((p,i)=>{
+    const ini=p.nome.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const cor=avCoresList[i%4];
+    const badgeCls=p.status==='Ativo'||p.status==='Ativa'?'bg':p.status==='Férias'?'ba':'br';
+    const alunosCount=alunos.filter(a=>a.prof===p.nome).length;
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;">
+        <div class="av ${cor}">${ini}</div>
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:14px;font-weight:600;">${p.nome}</div>
+          <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.esp||'—'}</div>
+        </div>
+        <span class="badge ${badgeCls}" style="flex-shrink:0;">${p.status}</span>
+      </div>
+      <hr class="divider">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span>Alunos ativos</span><strong>${alunosCount}</strong></div>
+      ${p.tel?`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">${p.tel}</div>`:''}
+      <hr class="divider">
+      <div style="display:flex;gap:8px;">
+        <button class="btn" style="font-size:12px;flex:1;justify-content:center;" onclick="editarProfessor(${i})">Editar</button>
+        <button class="btn btn-d" style="font-size:12px;flex:1;justify-content:center;" onclick="excluirProfessor(${i})">Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+  syncProfSelects();
+}
+function addProfessor(){
+  const nome=document.getElementById('pf-nome').value.trim();
+  const esp=document.getElementById('pf-esp').value.trim();
+  const tel=document.getElementById('pf-tel').value.trim();
+  const status=document.getElementById('pf-status').value;
+  if(!nome){alert('Informe o nome do professor.');return;}
+  professores.push({nome,esp,tel,status});
+  save();renderProfessores();
+  ['pf-nome','pf-esp','pf-tel'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-professor');
+}
+function editarProfessor(idx){
+  const p=professores[idx];
+  document.getElementById('epf-idx').value=idx;
+  document.getElementById('epf-nome').value=p.nome||'';
+  document.getElementById('epf-esp').value=p.esp||'';
+  document.getElementById('epf-tel').value=p.tel||'';
+  document.getElementById('epf-status').value=p.status||'Ativo';
+  openModal('modal-editar-professor');
+}
+function saveEditProfessor(){
+  const idx=parseInt(document.getElementById('epf-idx').value);
+  const nome=document.getElementById('epf-nome').value.trim();
+  if(!nome){alert('Informe o nome do professor.');return;}
+  const oldNome=professores[idx].nome;
+  professores[idx]={nome,esp:document.getElementById('epf-esp').value.trim(),tel:document.getElementById('epf-tel').value.trim(),status:document.getElementById('epf-status').value};
+  if(oldNome!==nome)alunos.forEach(a=>{if(a.prof===oldNome)a.prof=nome;});
+  save();renderProfessores();renderAlunos(alunos);
+  closeModal('modal-editar-professor');
+}
+function excluirProfessor(idx){
+  const p=professores[idx];
+  if(!confirm('Excluir o professor "'+p.nome+'"?\nOs alunos associados ficarão sem professor.'))return;
+  professores.splice(idx,1);save();renderProfessores();
+}
+
+// ── PLANOS ───────────────────────────────────────────────────────────────────
+function syncPlanoSelects(){
+  const opts=planos.map(p=>`<option value="${p.duracao}">${p.nome} — R$ ${p.valor.toLocaleString('pt-BR')}</option>`).join('');
+  ['in-plano','ed-plano'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+function renderPlanos(){
+  const grid=document.getElementById('planos-grid');
+  if(!grid)return;
+  grid.innerHTML=planos.map((p,i)=>{
+    const duracaoLabel={'Mensal':'/mês','Trimestral':'/3 meses','Semestral':'/6 meses','Anual':'/ano'}[p.duracao]||'';
+    const alunosCount=alunos.filter(a=>a.plano===p.duracao).length;
+    return `<div class="card" ${i===0?'style="border:2px solid #378add;"':''}>
+      ${i===0?'<div class="badge bb" style="margin-bottom:10px;">Mais popular</div>':''}
+      <div style="font-size:15px;font-weight:600;margin-bottom:4px;">${p.nome}</div>
+      <div style="font-size:22px;font-weight:600;margin-bottom:8px;">R$ ${p.valor.toLocaleString('pt-BR')}<span style="font-size:13px;font-weight:400;color:var(--text-secondary);">${duracaoLabel}</span></div>
+      <hr class="divider">
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.9;">${(p.desc||'').replace(/\n/g,'<br>')}</div>
+      <hr class="divider">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${alunosCount} aluno${alunosCount!==1?'s':''} ativo${alunosCount!==1?'s':''}</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" style="font-size:12px;flex:1;justify-content:center;" onclick="editarPlano(${i})">Editar</button>
+        <button class="btn btn-d" style="font-size:12px;flex:1;justify-content:center;" onclick="excluirPlano(${i})">Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+  syncPlanoSelects();
+}
+function addPlano(){
+  const nome=document.getElementById('pl-nome').value.trim();
+  const valor=parseFloat(document.getElementById('pl-valor').value)||0;
+  const duracao=document.getElementById('pl-dur').value;
+  const aulasSemanais=parseInt(document.getElementById('pl-aulas').value)||0;
+  const desc=document.getElementById('pl-desc').value.trim();
+  if(!nome||!valor){alert('Informe nome e valor do plano.');return;}
+  planos.push({nome,valor,duracao,aulasSemanais,desc});
+  save();renderPlanos();
+  ['pl-nome','pl-valor','pl-aulas','pl-desc'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-plano');
+}
+function editarPlano(idx){
+  const p=planos[idx];
+  document.getElementById('epl-idx').value=idx;
+  document.getElementById('epl-nome').value=p.nome||'';
+  document.getElementById('epl-valor').value=p.valor||'';
+  document.getElementById('epl-dur').value=p.duracao||'Mensal';
+  document.getElementById('epl-aulas').value=p.aulasSemanais||'';
+  document.getElementById('epl-desc').value=p.desc||'';
+  openModal('modal-editar-plano');
+}
+function saveEditPlano(){
+  const idx=parseInt(document.getElementById('epl-idx').value);
+  const nome=document.getElementById('epl-nome').value.trim();
+  const valor=parseFloat(document.getElementById('epl-valor').value)||0;
+  if(!nome||!valor){alert('Informe nome e valor do plano.');return;}
+  planos[idx]={nome,valor,duracao:document.getElementById('epl-dur').value,aulasSemanais:parseInt(document.getElementById('epl-aulas').value)||0,desc:document.getElementById('epl-desc').value.trim()};
+  save();renderPlanos();
+  closeModal('modal-editar-plano');
+}
+function excluirPlano(idx){
+  const p=planos[idx];
+  if(!confirm('Excluir o plano "'+p.nome+'"?\nOs alunos com este plano não serão afetados.'))return;
+  planos.splice(idx,1);save();renderPlanos();
+}
+
+// ── PAGAMENTOS EDITAR/EXCLUIR ────────────────────────────────────────────────
+function editarPagamento(idx){
+  const p=pagamentos[idx];
+  document.getElementById('ep-idx').value=idx;
+  document.getElementById('ep-aluno').value=p.aluno;
+  document.getElementById('ep-plano').value=p.plano;
+  const rawVal=parseFloat((p.valor||'0').replace(/[^0-9.,]/g,'').replace(',','.'))||0;
+  document.getElementById('ep-valor').value=rawVal;
+  document.getElementById('ep-venc').value=p.vencRaw||'';
+  document.getElementById('ep-forma').value=p.forma||'—';
+  document.getElementById('ep-status').value=p.status||'pendente';
+  openModal('modal-editar-pagamento');
+}
+function saveEditPagamento(){
+  const idx=parseInt(document.getElementById('ep-idx').value);
+  const valor=parseFloat(document.getElementById('ep-valor').value)||0;
+  if(!valor){alert('Informe o valor.');return;}
+  const vencRaw=document.getElementById('ep-venc').value;
+  let venc=pagamentos[idx].venc;
+  if(vencRaw){const d=new Date(vencRaw+'T00:00:00');venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
+  const status=document.getElementById('ep-status').value;
+  pagamentos[idx]={...pagamentos[idx],plano:document.getElementById('ep-plano').value.trim(),valor:'R$ '+valor.toLocaleString('pt-BR'),venc,vencRaw,forma:document.getElementById('ep-forma').value,status};
+  const a=alunos.find(x=>x.nome===pagamentos[idx].aluno);
+  if(a){a.status=status;a.venc=venc;}
+  save();filterPag(currentPagFilter);renderAlunos(alunos);renderNotificacoes();updateDashboard();
+  closeModal('modal-editar-pagamento');
+}
+function excluirPagamento(idx){
+  if(!confirm('Excluir este pagamento?\nEsta ação não pode ser desfeita.'))return;
+  pagamentos.splice(idx,1);save();filterPag(currentPagFilter);updateDashboard();
+}
+
+// ── NOTIFICAÇÕES ──────────────────────────────────────────────────────────────
+function renderNotificacoes(){
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const parseVenc=venc=>{
+    if(!venc||venc==='—')return null;
+    const [d,m]=venc.split('/').map(Number);
+    if(!d||!m)return null;
+    const yr=hoje.getFullYear();
+    const dt=new Date(yr,m-1,d);
+    if(dt<hoje&&(hoje-dt)>180*864e5)dt.setFullYear(yr+1);
+    return dt;
+  };
+  let vencHoje=0,emAtraso=0,em7d=0;
+  const alertas=[];
+  pagamentos.forEach((p,i)=>{
+    if(p.status==='pago')return;
+    const dt=parseVenc(p.venc);
+    if(!dt)return;
+    const diffDias=Math.round((dt-hoje)/(864e5));
+    if(diffDias<0){
+      emAtraso++;
+      alertas.push({type:'danger',aluno:p.aluno,msg:`pagamento atrasado — ${Math.abs(diffDias)} dia${Math.abs(diffDias)!==1?'s':''} em atraso`,sub:`Plano ${p.plano} · Venceu em ${p.venc}`,pagIdx:i});
+    } else if(diffDias<=1){
+      vencHoje++;
+      alertas.push({type:'warning',aluno:p.aluno,msg:diffDias===0?'vencimento hoje':'vencimento amanhã',sub:`Plano ${p.plano} · Vence em ${p.venc}`,pagIdx:i});
+    } else if(diffDias<=7){
+      em7d++;
+      alertas.push({type:'info',aluno:p.aluno,msg:`vencimento em ${diffDias} dias`,sub:`Plano ${p.plano} · Vence em ${p.venc}`,pagIdx:i});
+    }
+  });
+  const metrics=document.getElementById('notif-metrics');
+  if(metrics)metrics.innerHTML=`
+    <div class="mc"><div class="mc-label">Vencendo hoje/amanhã</div><div class="mc-val amber">${vencHoje}</div></div>
+    <div class="mc"><div class="mc-label">Em atraso</div><div class="mc-val red">${emAtraso}</div></div>
+    <div class="mc"><div class="mc-label">Vencendo em 7 dias</div><div class="mc-val">${em7d}</div></div>`;
+  const list=document.getElementById('notif-list');
+  if(!list)return;
+  if(alertas.length===0){list.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px;">Nenhum alerta ativo</div>';return;}
+  list.innerHTML=alertas.map(a=>{
+    const st=a.type==='danger'?'background:var(--bg-danger);color:var(--text-danger);':a.type==='warning'?'background:var(--bg-warning);color:var(--text-warning);':'background:var(--bg-info);color:var(--text-info);';
+    return `<div class="notif-item">
+      <div class="notif-icon" style="${st}">!</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${a.aluno} — ${a.msg}</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">${a.sub}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-left:10px;">
+        <button class="btn btn-s" style="font-size:12px;padding:4px 9px;" onclick="marcarPago(${a.pagIdx})">Marcar pago</button>
+        <button class="btn btn-d" style="font-size:12px;padding:4px 9px;" onclick="excluirPagamento(${a.pagIdx});renderNotificacoes();">Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+  const total=emAtraso+vencHoje;
+  document.querySelectorAll('.notif-dot').forEach(d=>d.style.display=total>0?'':'none');
+  const alertBtn=document.querySelector('.topbar-actions .btn-w');
+  if(alertBtn)alertBtn.textContent=total+' alerta'+(total!==1?'s':'');
+}
+
 function exportCSV(tipo){
   let content,filename;
   if(tipo==='alunos'){
@@ -951,7 +1178,7 @@ function exportCSV(tipo){
     content='Descricao,Tipo,Valor,Data\n'+fluxo.map(f=>`"${f.desc}","${f.tipo}","${f.valor}","${f.data}"`).join('\n');
     filename='financeiro_flex_flow.csv';
   }else{
-    content='Professor,Especialidade,Alunos,Aulas/semana,Status\n"Mariana Silva","Pilates solo e aparelhos",14,18,"Ativa"\n"Lucas Ferreira","Pilates clínico e reabilitação",11,14,"Ativo"\n"Juliana Ramos","Pilates para gestantes",8,10,"Ativa"\n"Rafael Duarte","Pilates funcional e esportivo",5,0,"Férias"';
+    content='Professor,Especialidade,Alunos ativos,Status\n'+professores.map(p=>`"${p.nome}","${p.esp||''}",${alunos.filter(a=>a.prof===p.nome).length},"${p.status}"`).join('\n');
     filename='professores_flex_flow.csv';
   }
   const bom='\uFEFF';
