@@ -207,7 +207,7 @@
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
           <table class="tbl">
-            <thead><tr><th style="width:26%">Aluno</th><th style="width:16%">Plano</th><th style="width:20%">Professor</th><th style="width:13%">Vencimento</th><th style="width:11%">Status</th><th style="width:14%">Histórico</th></tr></thead>
+            <thead><tr><th style="width:22%">Aluno</th><th style="width:13%">Plano</th><th style="width:17%">Professor</th><th style="width:11%">Vencimento</th><th style="width:10%">Status</th><th style="width:11%">Histórico</th><th style="width:16%">Ações</th></tr></thead>
             <tbody id="alunos-body"></tbody>
           </table>
         </div>
@@ -393,10 +393,23 @@
   <div class="modal">
     <div class="modal-title">Novo aluno</div>
     <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="in-nome" placeholder="Nome do aluno"></div><div class="fg"><label class="fl">Telefone</label><input class="fi" id="in-tel" placeholder="(21) 99999-9999"></div></div>
-    <div class="fg"><label class="fl">E-mail</label><input class="fi" id="in-email" placeholder="email@exemplo.com" type="email"></div>
+    <div class="fr2"><div class="fg"><label class="fl">CPF</label><input class="fi" id="in-cpf" placeholder="000.000.000-00"></div><div class="fg"><label class="fl">E-mail</label><input class="fi" id="in-email" placeholder="email@exemplo.com" type="email"></div></div>
+    <div class="fg"><label class="fl">Endereço</label><input class="fi" id="in-endereco" placeholder="Rua, número, bairro, cidade"></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
     <div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-aluno')">Cancelar</button><button class="btn btn-p" onclick="addAluno()">Cadastrar aluno</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-editar-aluno">
+  <div class="modal">
+    <div class="modal-title">Editar aluno</div>
+    <input type="hidden" id="ed-idx">
+    <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="ed-nome" placeholder="Nome do aluno"></div><div class="fg"><label class="fl">Telefone</label><input class="fi" id="ed-tel" placeholder="(21) 99999-9999"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">CPF</label><input class="fi" id="ed-cpf" placeholder="000.000.000-00"></div><div class="fg"><label class="fl">E-mail</label><input class="fi" id="ed-email" placeholder="email@exemplo.com" type="email"></div></div>
+    <div class="fg"><label class="fl">Endereço</label><input class="fi" id="ed-endereco" placeholder="Rua, número, bairro, cidade"></div>
+    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-editar-aluno')">Cancelar</button><button class="btn btn-p" onclick="saveEditAluno()">Salvar alterações</button></div>
   </div>
 </div>
 
@@ -498,13 +511,19 @@ function syncPagAluno(){
 }
 
 function renderAlunos(lista){
-  document.getElementById('alunos-body').innerHTML=lista.map(a=>`
-    <tr>
+  document.getElementById('alunos-body').innerHTML=lista.map(a=>{
+    const i=alunos.indexOf(a);
+    return `<tr>
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
       <td>${a.plano}</td><td>${a.prof}</td><td>${a.venc}</td>
       <td><span class="badge ${a.status==='pago'?'bg':a.status==='pendente'?'ba':'br'}">${a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado'}</span></td>
-      <td><button class="btn bb" style="font-size:11px;padding:4px 10px;" onclick="showHistorico(${alunos.indexOf(a)})">Ver histórico</button></td>
-    </tr>`).join('');
+      <td><button class="btn bb" style="font-size:11px;padding:4px 8px;" onclick="showHistorico(${i})">Ver histórico</button></td>
+      <td style="white-space:nowrap;">
+        <button class="btn" style="font-size:11px;padding:4px 8px;" onclick="editarAluno(${i})">Editar</button>
+        <button class="btn btn-d" style="font-size:11px;padding:4px 8px;margin-left:4px;" onclick="excluirAluno(${i})">Excluir</button>
+      </td>
+    </tr>`;
+  }).join('');
   syncPagAluno();
 }
 
@@ -594,7 +613,9 @@ document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{
 function addAluno(){
   const nome=document.getElementById('in-nome').value.trim();
   const tel=document.getElementById('in-tel').value.trim();
+  const cpf=document.getElementById('in-cpf').value.trim();
   const email=document.getElementById('in-email').value.trim();
+  const endereco=document.getElementById('in-endereco').value.trim();
   const planoRaw=document.getElementById('in-plano').value;
   const prof=document.getElementById('in-prof').value;
   const inicio=document.getElementById('in-inicio').value;
@@ -610,14 +631,62 @@ function addAluno(){
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   }
   const valor=planoPrices[plano]||350;
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,email,hist:[]});
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,endereco,hist:[]});
   pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
   renderPagamentos(pagamentos);
   updateDashboard();
-  ['in-nome','in-tel','in-email','in-inicio'].forEach(id=>document.getElementById(id).value='');
+  ['in-nome','in-tel','in-cpf','in-email','in-endereco','in-inicio'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-aluno');
+}
+
+function editarAluno(idx){
+  const a=alunos[idx];
+  document.getElementById('ed-idx').value=idx;
+  document.getElementById('ed-nome').value=a.nome||'';
+  document.getElementById('ed-tel').value=a.tel||'';
+  document.getElementById('ed-cpf').value=a.cpf||'';
+  document.getElementById('ed-email').value=a.email||'';
+  document.getElementById('ed-endereco').value=a.endereco||'';
+  document.getElementById('ed-plano').value=a.plano;
+  document.getElementById('ed-prof').value=a.prof;
+  openModal('modal-editar-aluno');
+}
+
+function saveEditAluno(){
+  const idx=parseInt(document.getElementById('ed-idx').value);
+  const nome=document.getElementById('ed-nome').value.trim();
+  if(!nome){alert('Informe o nome do aluno.');return;}
+  const a=alunos[idx];
+  const oldNome=a.nome;
+  a.nome=nome;
+  a.tel=document.getElementById('ed-tel').value.trim();
+  a.cpf=document.getElementById('ed-cpf').value.trim();
+  a.email=document.getElementById('ed-email').value.trim();
+  a.endereco=document.getElementById('ed-endereco').value.trim();
+  a.plano=document.getElementById('ed-plano').value;
+  a.prof=document.getElementById('ed-prof').value;
+  const partes=nome.split(' ');
+  a.ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
+  if(oldNome!==nome){
+    pagamentos.forEach(p=>{if(p.aluno===oldNome)p.aluno=nome;});
+  }
+  save();
+  renderAlunos(alunos);
+  renderPagamentos(pagamentos);
+  closeModal('modal-editar-aluno');
+}
+
+function excluirAluno(idx){
+  const a=alunos[idx];
+  if(!confirm('Excluir o aluno "'+a.nome+'"?\nEsta ação não pode ser desfeita.')){return;}
+  pagamentos=pagamentos.filter(p=>p.aluno!==a.nome);
+  alunos.splice(idx,1);
+  save();
+  renderAlunos(alunos);
+  renderPagamentos(pagamentos);
+  updateDashboard();
 }
 
 function addPagamento(){
