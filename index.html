@@ -160,9 +160,9 @@
       <!-- DASHBOARD -->
       <div id="page-dashboard">
         <div class="g4">
-          <div class="mc"><div class="mc-label">Total de alunos</div><div class="mc-val">38</div><div class="mc-sub green">+3 este mês</div></div>
+          <div class="mc"><div class="mc-label">Total de alunos</div><div class="mc-val" id="dash-total-alunos">—</div><div class="mc-sub green">+3 este mês</div></div>
           <div class="mc"><div class="mc-label">Receita mensal</div><div class="mc-val">R$ 14.200</div><div class="mc-sub green">+8% vs abril</div></div>
-          <div class="mc"><div class="mc-label">Pgtos pendentes</div><div class="mc-val">5</div><div class="mc-sub red">R$ 1.450 em aberto</div></div>
+          <div class="mc"><div class="mc-label">Pgtos pendentes</div><div class="mc-val" id="dash-pend-count">—</div><div class="mc-sub red" id="dash-pend-val">—</div></div>
           <div class="mc"><div class="mc-label">Professores ativos</div><div class="mc-val">4</div><div class="mc-sub">2 turmas hoje</div></div>
         </div>
         <div class="g2">
@@ -392,10 +392,10 @@
 <div class="overlay" id="modal-aluno">
   <div class="modal">
     <div class="modal-title">Novo aluno</div>
-    <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" placeholder="Nome do aluno"></div><div class="fg"><label class="fl">Telefone</label><input class="fi" placeholder="(21) 99999-9999"></div></div>
-    <div class="fg"><label class="fl">E-mail</label><input class="fi" placeholder="email@exemplo.com" type="email"></div>
-    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
-    <div class="fg"><label class="fl">Data de início</label><input class="fi" type="date"></div>
+    <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="in-nome" placeholder="Nome do aluno"></div><div class="fg"><label class="fl">Telefone</label><input class="fi" id="in-tel" placeholder="(21) 99999-9999"></div></div>
+    <div class="fg"><label class="fl">E-mail</label><input class="fi" id="in-email" placeholder="email@exemplo.com" type="email"></div>
+    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
+    <div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-aluno')">Cancelar</button><button class="btn btn-p" onclick="addAluno()">Cadastrar aluno</button></div>
   </div>
 </div>
@@ -421,26 +421,26 @@
 <div class="overlay" id="modal-pagamento">
   <div class="modal">
     <div class="modal-title">Registrar pagamento</div>
-    <div class="fg"><label class="fl">Aluno</label><select class="fi"><option>Ana Lima</option><option>Carlos Souza</option><option>Beatriz Melo</option><option>Fernanda Costa</option><option>Patricia Nunes</option><option>Ricardo Alves</option><option>Juliana Castro</option></select></div>
-    <div class="fr2"><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" type="number" placeholder="350"></div><div class="fg"><label class="fl">Forma de pagamento</label><select class="fi"><option>PIX</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Dinheiro</option><option>Transferência</option></select></div></div>
-    <div class="fg"><label class="fl">Data de pagamento</label><input class="fi" type="date"></div>
-    <div class="fg"><label class="fl">Observação (opcional)</label><input class="fi" placeholder="Ex: Mês de referência..."></div>
-    <div class="ma"><button class="btn" onclick="closeModal('modal-pagamento')">Cancelar</button><button class="btn btn-p" onclick="closeModal('modal-pagamento')">Registrar</button></div>
+    <div class="fg"><label class="fl">Aluno</label><select class="fi" id="in-pag-aluno"></select></div>
+    <div class="fr2"><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="in-pag-valor" type="number" placeholder="350"></div><div class="fg"><label class="fl">Forma de pagamento</label><select class="fi" id="in-pag-forma"><option>PIX</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Dinheiro</option><option>Transferência</option></select></div></div>
+    <div class="fg"><label class="fl">Data de pagamento</label><input class="fi" id="in-pag-data" type="date"></div>
+    <div class="fg"><label class="fl">Observação (opcional)</label><input class="fi" id="in-pag-obs" placeholder="Ex: Mês de referência..."></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-pagamento')">Cancelar</button><button class="btn btn-p" onclick="addPagamento()">Registrar</button></div>
   </div>
 </div>
 
 <div class="overlay" id="modal-lancamento">
   <div class="modal">
     <div class="modal-title">Novo lançamento</div>
-    <div class="fr2"><div class="fg"><label class="fl">Tipo</label><select class="fi"><option>Receita</option><option>Despesa</option></select></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" type="number" placeholder="0"></div></div>
-    <div class="fg"><label class="fl">Descrição</label><input class="fi" placeholder="Ex: Mensalidade, Aluguel..."></div>
-    <div class="fg"><label class="fl">Data</label><input class="fi" type="date"></div>
-    <div class="ma"><button class="btn" onclick="closeModal('modal-lancamento')">Cancelar</button><button class="btn btn-p" onclick="closeModal('modal-lancamento')">Adicionar</button></div>
+    <div class="fr2"><div class="fg"><label class="fl">Tipo</label><select class="fi" id="in-lanc-tipo"><option>Receita</option><option>Despesa</option></select></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="in-lanc-valor" type="number" placeholder="0"></div></div>
+    <div class="fg"><label class="fl">Descrição</label><input class="fi" id="in-lanc-desc" placeholder="Ex: Mensalidade, Aluguel..."></div>
+    <div class="fg"><label class="fl">Data</label><input class="fi" id="in-lanc-data" type="date"></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-lancamento')">Cancelar</button><button class="btn btn-p" onclick="addLancamento()">Adicionar</button></div>
   </div>
 </div>
 
 <script>
-const alunos=[
+const defaultAlunos=[
   {nome:'Ana Lima',ini:'AL',cor:'av-b',plano:'Mensal',prof:'Mariana Silva',venc:'10/06',status:'pago',hist:[{mes:'Jan',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Fev',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mar',val:'R$ 350',forma:'Cartão',st:'pago'},{mes:'Abr',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mai',val:'R$ 350',forma:'PIX',st:'pago'}]},
   {nome:'Carlos Souza',ini:'CS',cor:'av-t',plano:'Trimestral',prof:'Lucas Ferreira',venc:'12/06',status:'pendente',hist:[{mes:'Fev',val:'R$ 900',forma:'Cartão',st:'pago'},{mes:'Mai',val:'R$ 900',forma:'—',st:'pendente'}]},
   {nome:'Beatriz Melo',ini:'BM',cor:'av-p',plano:'Mensal',prof:'Mariana Silva',venc:'15/06',status:'pago',hist:[{mes:'Mar',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Abr',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mai',val:'R$ 350',forma:'Cartão',st:'pago'}]},
@@ -449,8 +449,7 @@ const alunos=[
   {nome:'Ricardo Alves',ini:'RA',cor:'av-t',plano:'Mensal',prof:'Lucas Ferreira',venc:'20/06',status:'pago',hist:[{mes:'Abr',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mai',val:'R$ 350',forma:'PIX',st:'pago'}]},
   {nome:'Juliana Castro',ini:'JC',cor:'av-p',plano:'Trimestral',prof:'Mariana Silva',venc:'13/06',status:'pendente',hist:[{mes:'Fev',val:'R$ 900',forma:'Cartão',st:'pago'},{mes:'Mai',val:'R$ 900',forma:'—',st:'pendente'}]},
 ];
-
-const pagamentos=[
+const defaultPagamentos=[
   {aluno:'Ana Lima',plano:'Mensal',valor:'R$ 350',venc:'10/06',status:'pago',forma:'PIX'},
   {aluno:'Carlos Souza',plano:'Trimestral',valor:'R$ 900',venc:'12/06',status:'pendente',forma:'—'},
   {aluno:'Beatriz Melo',plano:'Mensal',valor:'R$ 350',venc:'15/06',status:'pago',forma:'Cartão'},
@@ -459,8 +458,7 @@ const pagamentos=[
   {aluno:'Ricardo Alves',plano:'Mensal',valor:'R$ 350',venc:'20/06',status:'pago',forma:'PIX'},
   {aluno:'Juliana Castro',plano:'Trimestral',valor:'R$ 900',venc:'13/06',status:'pendente',forma:'—'},
 ];
-
-const fluxo=[
+const defaultFluxo=[
   {desc:'Mensalidades — Ana Lima, Beatriz, Ricardo',tipo:'income',valor:'+R$ 1.050',data:'02/05'},
   {desc:'Mensalidade — Fernanda Costa (semestral)',tipo:'income',valor:'+R$ 1.800',data:'01/05'},
   {desc:'Aluguel do estúdio',tipo:'expense',valor:'-R$ 3.200',data:'05/05'},
@@ -472,14 +470,42 @@ const fluxo=[
   {desc:'Mensalidades em lote — 7 alunos',tipo:'income',valor:'+R$ 7.650',data:'18/05'},
 ];
 
+let alunos=JSON.parse(localStorage.getItem('ff_alunos'))||defaultAlunos;
+let pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos'))||defaultPagamentos;
+let fluxo=JSON.parse(localStorage.getItem('ff_fluxo'))||defaultFluxo;
+
+function save(){
+  localStorage.setItem('ff_alunos',JSON.stringify(alunos));
+  localStorage.setItem('ff_pagamentos',JSON.stringify(pagamentos));
+  localStorage.setItem('ff_fluxo',JSON.stringify(fluxo));
+}
+
+const MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const avCores=['av-b','av-t','av-p','av-c'];
+const planoPrices={'Mensal':350,'Trimestral':900,'Semestral':1800};
+
+function updateDashboard(){
+  document.getElementById('dash-total-alunos').textContent=alunos.length;
+  const pend=pagamentos.filter(p=>p.status!=='pago');
+  document.getElementById('dash-pend-count').textContent=pend.length;
+  const totalPend=pend.reduce((s,p)=>s+parseInt((p.valor||'0').replace(/[^0-9]/g,'')),0);
+  document.getElementById('dash-pend-val').textContent='R$ '+totalPend.toLocaleString('pt-BR')+' em aberto';
+}
+
+function syncPagAluno(){
+  const sel=document.getElementById('in-pag-aluno');
+  if(sel)sel.innerHTML=alunos.map(a=>`<option>${a.nome}</option>`).join('');
+}
+
 function renderAlunos(lista){
-  document.getElementById('alunos-body').innerHTML=lista.map((a,i)=>`
+  document.getElementById('alunos-body').innerHTML=lista.map(a=>`
     <tr>
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
       <td>${a.plano}</td><td>${a.prof}</td><td>${a.venc}</td>
       <td><span class="badge ${a.status==='pago'?'bg':a.status==='pendente'?'ba':'br'}">${a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado'}</span></td>
       <td><button class="btn bb" style="font-size:11px;padding:4px 10px;" onclick="showHistorico(${alunos.indexOf(a)})">Ver histórico</button></td>
     </tr>`).join('');
+  syncPagAluno();
 }
 
 function filterAlunos(q){renderAlunos(alunos.filter(a=>a.nome.toLowerCase().includes(q.toLowerCase())));}
@@ -502,17 +528,38 @@ function showHistorico(idx){
   showPage('historico');
 }
 
+let currentPagFilter='todos';
+
 function renderPagamentos(lista){
-  document.getElementById('pagamentos-body').innerHTML=lista.map(p=>`
-    <tr>
+  document.getElementById('pagamentos-body').innerHTML=lista.map(p=>{
+    const ri=pagamentos.indexOf(p);
+    return `<tr>
       <td>${p.aluno}</td><td>${p.plano}</td><td>${p.valor}</td><td>${p.venc}</td>
       <td><span class="badge ${p.status==='pago'?'bg':p.status==='pendente'?'ba':'br'}">${p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado'}</span></td>
       <td>${p.forma}</td>
-      <td>${p.status!=='pago'?'<button class="btn btn-s" style="font-size:12px;padding:4px 10px;">Marcar pago</button>':''}</td>
-    </tr>`).join('');
+      <td>${p.status!=='pago'?`<button class="btn btn-s" style="font-size:12px;padding:4px 10px;" onclick="marcarPago(${ri})">Marcar pago</button>`:''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function marcarPago(idx){
+  pagamentos[idx].status='pago';
+  pagamentos[idx].forma='PIX';
+  const nomeAluno=pagamentos[idx].aluno;
+  const a=alunos.find(x=>x.nome===nomeAluno);
+  if(a){
+    a.status='pago';
+    const hoje=new Date();
+    a.hist.push({mes:MES[hoje.getMonth()],val:pagamentos[idx].valor,forma:'PIX',st:'pago'});
+  }
+  save();
+  filterPag(currentPagFilter);
+  renderAlunos(alunos);
+  updateDashboard();
 }
 
 function filterPag(f,btn){
+  currentPagFilter=f;
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   renderPagamentos(f==='todos'?pagamentos:pagamentos.filter(p=>p.status===f));
@@ -544,7 +591,75 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
-function addAluno(){closeModal('modal-aluno');}
+function addAluno(){
+  const nome=document.getElementById('in-nome').value.trim();
+  const tel=document.getElementById('in-tel').value.trim();
+  const email=document.getElementById('in-email').value.trim();
+  const planoRaw=document.getElementById('in-plano').value;
+  const prof=document.getElementById('in-prof').value;
+  const inicio=document.getElementById('in-inicio').value;
+  if(!nome){alert('Informe o nome do aluno.');return;}
+  const plano=planoRaw.split(' —')[0];
+  const cor=avCores[alunos.length%4];
+  const partes=nome.split(' ');
+  const ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
+  let venc='—';
+  if(inicio){
+    const d=new Date(inicio+'T00:00:00');
+    d.setMonth(d.getMonth()+1);
+    venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  }
+  const valor=planoPrices[plano]||350;
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,email,hist:[]});
+  pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
+  save();
+  renderAlunos(alunos);
+  renderPagamentos(pagamentos);
+  updateDashboard();
+  ['in-nome','in-tel','in-email','in-inicio'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-aluno');
+}
+
+function addPagamento(){
+  const nomeAluno=document.getElementById('in-pag-aluno').value;
+  const valor=parseFloat(document.getElementById('in-pag-valor').value)||0;
+  const forma=document.getElementById('in-pag-forma').value;
+  const data=document.getElementById('in-pag-data').value;
+  if(!nomeAluno||!valor||!data){alert('Preencha todos os campos obrigatórios.');return;}
+  const d=new Date(data+'T00:00:00');
+  const venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const a=alunos.find(x=>x.nome===nomeAluno);
+  const plano=a?a.plano:'—';
+  const existing=pagamentos.find(p=>p.aluno===nomeAluno&&p.status!=='pago');
+  if(existing){
+    existing.status='pago';existing.forma=forma;
+    if(a){a.status='pago';a.hist.push({mes:MES[d.getMonth()],val:'R$ '+valor,forma,st:'pago'});}
+  } else {
+    pagamentos.push({aluno:nomeAluno,plano,valor:'R$ '+valor,venc,status:'pago',forma});
+  }
+  save();
+  filterPag(currentPagFilter);
+  renderAlunos(alunos);
+  updateDashboard();
+  ['in-pag-valor','in-pag-data','in-pag-obs'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-pagamento');
+}
+
+function addLancamento(){
+  const tipo=document.getElementById('in-lanc-tipo').value==='Receita'?'income':'expense';
+  const valor=parseFloat(document.getElementById('in-lanc-valor').value)||0;
+  const desc=document.getElementById('in-lanc-desc').value.trim();
+  const data=document.getElementById('in-lanc-data').value;
+  if(!desc||!valor||!data){alert('Preencha todos os campos.');return;}
+  const d=new Date(data+'T00:00:00');
+  const dataFmt=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const sinal=tipo==='income'?'+':'-';
+  fluxo.unshift({desc,tipo,valor:sinal+'R$ '+valor.toLocaleString('pt-BR'),data:dataFmt});
+  save();
+  renderFluxo();
+  ['in-lanc-valor','in-lanc-desc','in-lanc-data'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-lancamento');
+}
 
 function exportCSV(tipo){
   let content,filename;
@@ -594,6 +709,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   renderAlunos(alunos);
   renderPagamentos(pagamentos);
   renderFluxo();
+  updateDashboard();
   new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:['Dez','Jan','Fev','Mar','Abr','Mai'],datasets:[{label:'Receita',data:[11200,10200,11800,12500,13100,14200],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[7200,7000,7400,7600,7700,7800],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
   new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:['Mensal','Trimestral','Semestral'],datasets:[{data:[22,10,6],backgroundColor:['#378ADD','#7F77DD','#1D9E75'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 });
