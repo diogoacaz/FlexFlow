@@ -177,15 +177,6 @@
       <div class="fg"><label class="fl">Senha</label><input class="fi" id="au-pass" type="password" placeholder="Sua senha" autocomplete="current-password"></div>
       <div id="auth-err" class="auth-err hidden"></div>
       <button class="btn btn-p auth-btn" onclick="doLogin()">Entrar</button>
-      <div class="auth-switch">Não tem conta? <span onclick="showAuthTab('register')">Criar conta</span></div>
-    </div>
-    <div id="auth-register" class="hidden">
-      <div class="fg"><label class="fl">Usuário</label><input class="fi" id="au-reg-user" placeholder="3–20 letras, números ou _" autocomplete="username"></div>
-      <div class="fg"><label class="fl">Senha</label><input class="fi" id="au-reg-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
-      <div class="fg"><label class="fl">Confirmar senha</label><input class="fi" id="au-reg-confirm" type="password" placeholder="Repita a senha" autocomplete="new-password"></div>
-      <div id="auth-reg-err" class="auth-err hidden"></div>
-      <button class="btn btn-p auth-btn" onclick="doRegister()">Criar conta</button>
-      <div class="auth-switch">Já tem conta? <span onclick="showAuthTab('login')">Entrar</span></div>
     </div>
   </div>
 </div>
@@ -211,6 +202,7 @@
     </nav>
     <div class="sidebar-user">
       <div class="sidebar-uname" id="sidebar-username"></div>
+      <button class="btn" onclick="openModal('modal-novo-usuario')" style="width:100%;justify-content:center;font-size:12px;margin-bottom:6px;">+ Novo usuário</button>
       <button class="btn btn-d" onclick="logout()" style="width:100%;justify-content:center;font-size:12px;">Sair</button>
     </div>
   </div>
@@ -461,6 +453,18 @@
 </div>
 
 <!-- MODAIS -->
+<div class="overlay" id="modal-novo-usuario">
+  <div class="modal">
+    <div class="modal-title">Criar novo usuário</div>
+    <div class="fg"><label class="fl">Usuário</label><input class="fi" id="nu-user" placeholder="3–20 letras, números ou _" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Senha</label><input class="fi" id="nu-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+    <div class="fg"><label class="fl">Confirmar senha</label><input class="fi" id="nu-confirm" type="password" placeholder="Repita a senha" autocomplete="new-password"></div>
+    <div id="nu-err" class="auth-err hidden"></div>
+    <div id="nu-ok" class="feedback hidden" style="background:var(--bg-success);color:var(--text-success);"></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-novo-usuario')">Cancelar</button><button class="btn btn-p" onclick="addNovoUsuario()">Criar usuário</button></div>
+  </div>
+</div>
+
 <div class="overlay" id="modal-aluno">
   <div class="modal">
     <div class="modal-title">Novo aluno</div>
@@ -569,12 +573,6 @@ async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
-function showAuthTab(tab){
-  document.getElementById('auth-login').classList.toggle('hidden',tab!=='login');
-  document.getElementById('auth-register').classList.toggle('hidden',tab!=='register');
-  document.getElementById('auth-err').classList.add('hidden');
-  document.getElementById('auth-reg-err').classList.add('hidden');
-}
 function setAuthErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.remove('hidden');}
 async function doLogin(){
   const u=document.getElementById('au-user').value.trim().toLowerCase();
@@ -586,23 +584,9 @@ async function doLogin(){
   if(h!==users[u].hash){setAuthErr('auth-err','Senha incorreta.');return;}
   startSession(u);
 }
-async function doRegister(){
-  const u=document.getElementById('au-reg-user').value.trim().toLowerCase();
-  const p=document.getElementById('au-reg-pass').value;
-  const c=document.getElementById('au-reg-confirm').value;
-  if(!u||!p){setAuthErr('auth-reg-err','Preencha todos os campos.');return;}
-  if(!/^[a-z0-9_]{3,20}$/.test(u)){setAuthErr('auth-reg-err','Usuário: 3–20 caracteres (letras, números ou _).');return;}
-  if(p.length<6){setAuthErr('auth-reg-err','A senha deve ter ao menos 6 caracteres.');return;}
-  if(p!==c){setAuthErr('auth-reg-err','As senhas não coincidem.');return;}
-  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
-  if(users[u]){setAuthErr('auth-reg-err','Este usuário já existe.');return;}
-  users[u]={hash:await sha256(p)};
-  localStorage.setItem('ff_users',JSON.stringify(users));
-  startSession(u);
-}
 function startSession(username){
   currentUser=username;
-  sessionStorage.setItem('ff_current_user',username);
+  localStorage.setItem('ff_current_user',username);
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('user-badge').textContent=username;
   document.getElementById('sidebar-username').textContent=username;
@@ -615,8 +599,28 @@ function startSession(username){
   updateDashboard();
 }
 function logout(){
-  sessionStorage.removeItem('ff_current_user');
+  localStorage.removeItem('ff_current_user');
   location.reload();
+}
+async function addNovoUsuario(){
+  const u=document.getElementById('nu-user').value.trim().toLowerCase();
+  const p=document.getElementById('nu-pass').value;
+  const c=document.getElementById('nu-confirm').value;
+  const errEl=document.getElementById('nu-err');
+  const okEl=document.getElementById('nu-ok');
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  if(!u||!p){errEl.textContent='Preencha todos os campos.';errEl.classList.remove('hidden');return;}
+  if(!/^[a-z0-9_]{3,20}$/.test(u)){errEl.textContent='Usuário: 3–20 caracteres (letras, números ou _).';errEl.classList.remove('hidden');return;}
+  if(p.length<6){errEl.textContent='A senha deve ter ao menos 6 caracteres.';errEl.classList.remove('hidden');return;}
+  if(p!==c){errEl.textContent='As senhas não coincidem.';errEl.classList.remove('hidden');return;}
+  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
+  if(users[u]){errEl.textContent='Este usuário já existe.';errEl.classList.remove('hidden');return;}
+  users[u]={hash:await sha256(p)};
+  localStorage.setItem('ff_users',JSON.stringify(users));
+  ['nu-user','nu-pass','nu-confirm'].forEach(id=>document.getElementById(id).value='');
+  okEl.textContent='Usuário "'+u+'" criado com sucesso!';
+  okEl.classList.remove('hidden');
+  setTimeout(()=>closeModal('modal-novo-usuario'),1500);
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -904,12 +908,11 @@ function buildRelatorioCharts(){
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
-  // Restore session from sessionStorage (persists while browser tab is open)
-  const saved=sessionStorage.getItem('ff_current_user');
+  // Restore session from localStorage (persists across browser restarts)
+  const saved=localStorage.getItem('ff_current_user');
   if(saved){startSession(saved);}
-  // Enter key shortcuts for login / register forms
+  // Enter key shortcut for login form
   document.getElementById('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  document.getElementById('au-reg-confirm').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
   // Dashboard charts (always built, data irrelevant until login)
   new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:['Dez','Jan','Fev','Mar','Abr','Mai'],datasets:[{label:'Receita',data:[11200,10200,11800,12500,13100,14200],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[7200,7000,7400,7600,7700,7800],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
   new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:['Mensal','Trimestral','Semestral'],datasets:[{data:[22,10,6],backgroundColor:['#378ADD','#7F77DD','#1D9E75'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
