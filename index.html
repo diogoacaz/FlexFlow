@@ -112,6 +112,18 @@
   .fr2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .ma { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
   .feedback { padding: 12px 16px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; margin-top: 12px; }
+  /* Auth screen */
+  #auth-screen { position: fixed; inset: 0; background: var(--bg-tertiary); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .auth-box { background: var(--bg-primary); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 32px 28px; width: 100%; max-width: 360px; }
+  .auth-logo { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+  .auth-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 28px; }
+  .auth-err { background: var(--bg-danger); color: var(--text-danger); padding: 10px 13px; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 12px; }
+  .auth-btn { width: 100%; justify-content: center; padding: 10px; font-size: 14px; }
+  .auth-switch { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 16px; }
+  .auth-switch span { color: var(--text-info); cursor: pointer; font-weight: 600; text-decoration: underline; }
+  /* Sidebar user section */
+  .sidebar-user { padding: 12px; border-top: 0.5px solid var(--border); }
+  .sidebar-uname { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
   /* Bottom navigation (mobile only) */
   .bnav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-primary); border-top: 0.5px solid var(--border); z-index: 100; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .bnav::-webkit-scrollbar { display: none; }
@@ -155,6 +167,29 @@
 </head>
 <body>
 
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">Flex Flow</div>
+    <div class="auth-sub">Gestão do estúdio</div>
+    <div id="auth-login">
+      <div class="fg"><label class="fl">Usuário</label><input class="fi" id="au-user" placeholder="Seu usuário" autocomplete="username"></div>
+      <div class="fg"><label class="fl">Senha</label><input class="fi" id="au-pass" type="password" placeholder="Sua senha" autocomplete="current-password"></div>
+      <div id="auth-err" class="auth-err hidden"></div>
+      <button class="btn btn-p auth-btn" onclick="doLogin()">Entrar</button>
+      <div class="auth-switch">Não tem conta? <span onclick="showAuthTab('register')">Criar conta</span></div>
+    </div>
+    <div id="auth-register" class="hidden">
+      <div class="fg"><label class="fl">Usuário</label><input class="fi" id="au-reg-user" placeholder="3–20 letras, números ou _" autocomplete="username"></div>
+      <div class="fg"><label class="fl">Senha</label><input class="fi" id="au-reg-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <div class="fg"><label class="fl">Confirmar senha</label><input class="fi" id="au-reg-confirm" type="password" placeholder="Repita a senha" autocomplete="new-password"></div>
+      <div id="auth-reg-err" class="auth-err hidden"></div>
+      <button class="btn btn-p auth-btn" onclick="doRegister()">Criar conta</button>
+      <div class="auth-switch">Já tem conta? <span onclick="showAuthTab('login')">Entrar</span></div>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
   <!-- SIDEBAR -->
@@ -174,6 +209,10 @@
       <div class="ni" onclick="showPage('notificacoes')"><span class="ni-icon">&#9632;</span><span>Notificações</span><span class="notif-dot"></span></div>
       <div class="ni" onclick="showPage('exportar')"><span class="ni-icon">&#9632;</span><span>Exportar dados</span></div>
     </nav>
+    <div class="sidebar-user">
+      <div class="sidebar-uname" id="sidebar-username"></div>
+      <button class="btn btn-d" onclick="logout()" style="width:100%;justify-content:center;font-size:12px;">Sair</button>
+    </div>
   </div>
 
   <!-- MAIN -->
@@ -183,6 +222,8 @@
       <div class="topbar-actions">
         <button class="btn btn-w" onclick="showPage('notificacoes')" style="font-size:12px;">3 alertas</button>
         <button class="btn btn-p" onclick="showPage('exportar')">Exportar dados</button>
+        <span id="user-badge" style="font-size:12px;color:var(--text-secondary);border-left:0.5px solid var(--border);padding-left:12px;margin-left:4px;"></span>
+        <button class="btn btn-d" onclick="logout()" style="font-size:12px;">Sair</button>
       </div>
     </div>
 
@@ -514,15 +555,70 @@ const defaultFluxo=[
   {desc:'Mensalidades em lote — 7 alunos',tipo:'income',valor:'+R$ 7.650',data:'18/05'},
 ];
 
-let alunos=JSON.parse(localStorage.getItem('ff_alunos'))||defaultAlunos;
-let pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos'))||defaultPagamentos;
-let fluxo=JSON.parse(localStorage.getItem('ff_fluxo'))||defaultFluxo;
+let alunos=[], pagamentos=[], fluxo=[], currentUser=null;
 
 function save(){
-  localStorage.setItem('ff_alunos',JSON.stringify(alunos));
-  localStorage.setItem('ff_pagamentos',JSON.stringify(pagamentos));
-  localStorage.setItem('ff_fluxo',JSON.stringify(fluxo));
+  if(!currentUser)return;
+  localStorage.setItem('ff_alunos_'+currentUser,JSON.stringify(alunos));
+  localStorage.setItem('ff_pagamentos_'+currentUser,JSON.stringify(pagamentos));
+  localStorage.setItem('ff_fluxo_'+currentUser,JSON.stringify(fluxo));
 }
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+async function sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function showAuthTab(tab){
+  document.getElementById('auth-login').classList.toggle('hidden',tab!=='login');
+  document.getElementById('auth-register').classList.toggle('hidden',tab!=='register');
+  document.getElementById('auth-err').classList.add('hidden');
+  document.getElementById('auth-reg-err').classList.add('hidden');
+}
+function setAuthErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.remove('hidden');}
+async function doLogin(){
+  const u=document.getElementById('au-user').value.trim().toLowerCase();
+  const p=document.getElementById('au-pass').value;
+  if(!u||!p){setAuthErr('auth-err','Preencha usuário e senha.');return;}
+  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
+  if(!users[u]){setAuthErr('auth-err','Usuário não encontrado.');return;}
+  const h=await sha256(p);
+  if(h!==users[u].hash){setAuthErr('auth-err','Senha incorreta.');return;}
+  startSession(u);
+}
+async function doRegister(){
+  const u=document.getElementById('au-reg-user').value.trim().toLowerCase();
+  const p=document.getElementById('au-reg-pass').value;
+  const c=document.getElementById('au-reg-confirm').value;
+  if(!u||!p){setAuthErr('auth-reg-err','Preencha todos os campos.');return;}
+  if(!/^[a-z0-9_]{3,20}$/.test(u)){setAuthErr('auth-reg-err','Usuário: 3–20 caracteres (letras, números ou _).');return;}
+  if(p.length<6){setAuthErr('auth-reg-err','A senha deve ter ao menos 6 caracteres.');return;}
+  if(p!==c){setAuthErr('auth-reg-err','As senhas não coincidem.');return;}
+  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
+  if(users[u]){setAuthErr('auth-reg-err','Este usuário já existe.');return;}
+  users[u]={hash:await sha256(p)};
+  localStorage.setItem('ff_users',JSON.stringify(users));
+  startSession(u);
+}
+function startSession(username){
+  currentUser=username;
+  sessionStorage.setItem('ff_current_user',username);
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('user-badge').textContent=username;
+  document.getElementById('sidebar-username').textContent=username;
+  alunos=JSON.parse(localStorage.getItem('ff_alunos_'+username))||defaultAlunos;
+  pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+username))||defaultPagamentos;
+  fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+username))||defaultFluxo;
+  renderAlunos(alunos);
+  renderPagamentos(pagamentos);
+  renderFluxo();
+  updateDashboard();
+}
+function logout(){
+  sessionStorage.removeItem('ff_current_user');
+  location.reload();
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const avCores=['av-b','av-t','av-p','av-c'];
@@ -808,10 +904,13 @@ function buildRelatorioCharts(){
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
-  renderAlunos(alunos);
-  renderPagamentos(pagamentos);
-  renderFluxo();
-  updateDashboard();
+  // Restore session from sessionStorage (persists while browser tab is open)
+  const saved=sessionStorage.getItem('ff_current_user');
+  if(saved){startSession(saved);}
+  // Enter key shortcuts for login / register forms
+  document.getElementById('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('au-reg-confirm').addEventListener('keydown',e=>{if(e.key==='Enter')doRegister();});
+  // Dashboard charts (always built, data irrelevant until login)
   new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:['Dez','Jan','Fev','Mar','Abr','Mai'],datasets:[{label:'Receita',data:[11200,10200,11800,12500,13100,14200],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[7200,7000,7400,7600,7700,7800],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
   new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:['Mensal','Trimestral','Semestral'],datasets:[{data:[22,10,6],backgroundColor:['#378ADD','#7F77DD','#1D9E75'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 });
