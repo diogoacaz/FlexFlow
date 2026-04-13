@@ -157,8 +157,7 @@
     #tbl-alunos th:nth-child(2), #tbl-alunos td:nth-child(2),
     #tbl-alunos th:nth-child(3), #tbl-alunos td:nth-child(3),
     #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
-    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6),
-    #tbl-alunos th:nth-child(7), #tbl-alunos td:nth-child(7) { display: none; }
+    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
     #tbl-pagamentos th:nth-child(2), #tbl-pagamentos td:nth-child(2),
     #tbl-pagamentos th:nth-child(4), #tbl-pagamentos td:nth-child(4),
     #tbl-pagamentos th:nth-child(6), #tbl-pagamentos td:nth-child(6) { display: none; }
@@ -286,7 +285,7 @@
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
           <table class="tbl" id="tbl-alunos">
-            <thead><tr><th style="width:19%">Aluno</th><th style="width:12%">Plano</th><th style="width:15%">Professor</th><th style="width:10%">Vencimento</th><th style="width:9%">Status</th><th style="width:9%">Situação</th><th style="width:10%">Histórico</th><th style="width:16%">Ações</th></tr></thead>
+            <thead><tr><th style="width:28%">Aluno</th><th style="width:17%">Plano</th><th style="width:22%">Professor</th><th style="width:13%">Vencimento</th><th style="width:10%">Status</th><th style="width:10%">Situação</th></tr></thead>
             <tbody id="alunos-body"></tbody>
           </table>
         </div>
@@ -369,17 +368,64 @@
       <!-- HISTÓRICO -->
       <div id="page-historico" class="hidden">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-          <button class="btn" onclick="showPage('alunos')">&#8592; Voltar</button>
+          <button class="btn" onclick="showPage('aluno-detalhe')">&#8592; Voltar</button>
           <span style="font-size:15px;font-weight:600;" id="hist-nome">Histórico</span>
         </div>
         <div class="g3">
-          <div class="mc"><div class="mc-label">Total pago (2025)</div><div class="mc-val green" id="hist-total">—</div></div>
+          <div class="mc"><div class="mc-label">Total pago</div><div class="mc-val green" id="hist-total">—</div></div>
           <div class="mc"><div class="mc-label">Plano atual</div><div class="mc-val" id="hist-plano" style="font-size:16px;">—</div></div>
           <div class="mc"><div class="mc-label">Status atual</div><div class="mc-val" id="hist-status" style="font-size:16px;">—</div></div>
         </div>
         <div class="card">
           <div class="sec-title">Histórico de pagamentos</div>
           <div id="hist-list"></div>
+        </div>
+      </div>
+
+      <!-- FICHA DO ALUNO -->
+      <div id="page-aluno-detalhe" class="hidden">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+          <button class="btn" onclick="showPage('alunos')">&#8592; Voltar</button>
+          <span style="font-size:15px;font-weight:600;" id="det-nome-title">Aluno</span>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div class="av" id="det-av" style="width:48px;height:48px;font-size:18px;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:17px;font-weight:600;" id="det-nome">—</div>
+              <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;" id="det-badges"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;margin-top:4px;">
+              <button class="btn btn-p" style="font-size:13px;" onclick="editarAluno(currentAlunoIdx)">Editar</button>
+              <button class="btn btn-d" style="font-size:13px;" onclick="excluirAluno(currentAlunoIdx)">Excluir</button>
+            </div>
+          </div>
+        </div>
+        <div class="g3" style="margin-bottom:14px;">
+          <div class="mc"><div class="mc-label">Plano</div><div style="font-size:15px;font-weight:600;margin-top:5px;" id="det-plano">—</div></div>
+          <div class="mc"><div class="mc-label">Professor</div><div style="font-size:14px;font-weight:600;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="det-prof">—</div></div>
+          <div class="mc"><div class="mc-label">Próximo vencimento</div><div style="font-size:15px;font-weight:600;margin-top:5px;" id="det-venc">—</div></div>
+        </div>
+        <div class="g2" style="margin-bottom:14px;">
+          <div class="card">
+            <div class="sec-title">Contato</div>
+            <div style="display:grid;gap:11px;">
+              <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Telefone</div><div style="font-size:13px;" id="det-tel">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">E-mail</div><div style="font-size:13px;" id="det-email">—</div></div>
+              <div><div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">CPF</div><div style="font-size:13px;" id="det-cpf">—</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="sec-title">Endereço</div>
+            <div style="font-size:13px;line-height:1.9;" id="det-endereco">—</div>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div class="sec-title" style="margin:0;">Histórico de pagamentos</div>
+            <button class="btn bb" style="font-size:12px;" onclick="showHistorico(currentAlunoIdx)">Ver completo</button>
+          </div>
+          <div id="det-hist"></div>
         </div>
       </div>
 
@@ -871,19 +917,54 @@ function renderAlunos(lista){
   document.getElementById('alunos-body').innerHTML=lista.map(a=>{
     const i=alunos.indexOf(a);
     const ativo=a.ativo!==false;
-    return `<tr>
+    return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
       <td>${a.plano}</td><td>${a.prof}</td><td>${a.venc}</td>
       <td><span class="badge ${a.status==='pago'?'bg':a.status==='pendente'?'ba':'br'}">${a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado'}</span></td>
       <td><span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span></td>
-      <td><button class="btn bb" style="font-size:11px;padding:4px 8px;" onclick="showHistorico(${i})">Ver histórico</button></td>
-      <td style="white-space:nowrap;">
-        <button class="btn" style="font-size:11px;padding:4px 8px;" onclick="editarAluno(${i})">Editar</button>
-        <button class="btn btn-d" style="font-size:11px;padding:4px 8px;margin-left:4px;" onclick="excluirAluno(${i})">Excluir</button>
-      </td>
     </tr>`;
   }).join('');
   syncPagAluno();
+}
+
+let currentAlunoIdx=null;
+function showAlunoDetalhe(idx){
+  currentAlunoIdx=idx;
+  const a=alunos[idx];
+  document.getElementById('det-nome-title').textContent=a.nome;
+  const avEl=document.getElementById('det-av');
+  avEl.className='av '+a.cor;
+  avEl.textContent=a.ini;
+  document.getElementById('det-nome').textContent=a.nome;
+  const statusLabel=a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado';
+  const statusCls=a.status==='pago'?'bg':a.status==='pendente'?'ba':'br';
+  const ativo=a.ativo!==false;
+  document.getElementById('det-badges').innerHTML=
+    `<span class="badge ${statusCls}">${statusLabel}</span>`+
+    `<span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>`;
+  document.getElementById('det-plano').textContent=a.plano||'—';
+  document.getElementById('det-prof').textContent=a.prof||'—';
+  document.getElementById('det-venc').textContent=a.venc||'—';
+  document.getElementById('det-tel').textContent=a.tel||'—';
+  document.getElementById('det-email').textContent=a.email||'—';
+  document.getElementById('det-cpf').textContent=a.cpf||'—';
+  const parts=[];
+  if(a.logradouro){let s=a.logradouro;if(a.numero)s+=', '+a.numero;if(a.complemento)s+=' — '+a.complemento;parts.push(s);}
+  if(a.bairro)parts.push(a.bairro);
+  const cidadeLinha=[a.municipio,a.estado].filter(Boolean).join(' — ');
+  if(cidadeLinha)parts.push(cidadeLinha);
+  if(a.cep)parts.push('CEP: '+a.cep);
+  document.getElementById('det-endereco').innerHTML=parts.length?parts.join('<br>'):'<span style="color:var(--text-secondary);">Endereço não informado</span>';
+  const hist=(a.hist||[]).slice(-5).reverse();
+  document.getElementById('det-hist').innerHTML=hist.length?hist.map(h=>`
+    <div class="hist-line">
+      <span style="color:var(--text-secondary);min-width:36px;">${h.mes}</span>
+      <span style="flex:1;padding:0 12px;">${a.plano}</span>
+      <span style="margin-right:12px;">${h.forma}</span>
+      <span style="margin-right:12px;font-weight:600;">${h.val}</span>
+      <span class="badge ${h.st==='pago'?'bg':h.st==='pendente'?'ba':'br'}">${h.st==='pago'?'Pago':h.st==='pendente'?'Pendente':'Atrasado'}</span>
+    </div>`).join(''):'<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">Nenhum pagamento registrado</div>';
+  showPage('aluno-detalhe');
 }
 
 let currentAlunoFilter='todos';
@@ -1041,8 +1122,8 @@ function excluirLancamento(idx){
   renderFluxo();
 }
 
-const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','notificacoes','exportar'];
-const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno',notificacoes:'Notificações',exportar:'Exportar dados'};
+const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','notificacoes','exportar'];
+const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno',notificacoes:'Notificações',exportar:'Exportar dados'};
 const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar'];
 
 function showPage(p){
@@ -1151,6 +1232,7 @@ function saveEditAluno(){
   renderAlunos(alunos);
   renderPagamentos(pagamentos);
   closeModal('modal-editar-aluno');
+  if(currentAlunoIdx!==null) showAlunoDetalhe(idx);
 }
 
 function excluirAluno(idx){
@@ -1158,10 +1240,12 @@ function excluirAluno(idx){
   if(!confirm('Excluir o aluno "'+a.nome+'"?\nEsta ação não pode ser desfeita.')){return;}
   pagamentos=pagamentos.filter(p=>p.aluno!==a.nome);
   alunos.splice(idx,1);
+  currentAlunoIdx=null;
   save();
   renderAlunos(alunos);
   renderPagamentos(pagamentos);
   updateDashboard();
+  showPage('alunos');
 }
 
 function addPagamento(){
