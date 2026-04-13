@@ -154,10 +154,9 @@
     .export-card { flex-direction: column; align-items: flex-start; gap: 10px; }
     .hist-line { flex-wrap: wrap; gap: 4px; }
     /* Hide less important columns on mobile */
-    #tbl-alunos th:nth-child(2), #tbl-alunos td:nth-child(2),
     #tbl-alunos th:nth-child(3), #tbl-alunos td:nth-child(3),
     #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
-    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
+    #tbl-alunos th:nth-child(5), #tbl-alunos td:nth-child(5) { display: none; }
     #tbl-pagamentos th:nth-child(2), #tbl-pagamentos td:nth-child(2),
     #tbl-pagamentos th:nth-child(4), #tbl-pagamentos td:nth-child(4),
     #tbl-pagamentos th:nth-child(6), #tbl-pagamentos td:nth-child(6) { display: none; }
@@ -285,7 +284,7 @@
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
           <table class="tbl" id="tbl-alunos">
-            <thead><tr><th style="width:28%">Aluno</th><th style="width:17%">Plano</th><th style="width:22%">Professor</th><th style="width:13%">Vencimento</th><th style="width:10%">Status</th><th style="width:10%">Situação</th></tr></thead>
+            <thead><tr><th style="width:24%">Aluno</th><th style="width:14%">Plano</th><th style="width:12%">Valor</th><th style="width:20%">Professor</th><th style="width:14%">Matrícula</th><th style="width:16%">Situação</th></tr></thead>
             <tbody id="alunos-body"></tbody>
           </table>
         </div>
@@ -401,10 +400,11 @@
             </div>
           </div>
         </div>
-        <div class="g3" style="margin-bottom:14px;">
+        <div class="g2" style="margin-bottom:14px;">
           <div class="mc"><div class="mc-label">Plano</div><div style="font-size:15px;font-weight:600;margin-top:5px;" id="det-plano">—</div></div>
+          <div class="mc"><div class="mc-label">Valor</div><div style="font-size:15px;font-weight:600;margin-top:5px;" id="det-valor">—</div></div>
           <div class="mc"><div class="mc-label">Professor</div><div style="font-size:14px;font-weight:600;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="det-prof">—</div></div>
-          <div class="mc"><div class="mc-label">Próximo vencimento</div><div style="font-size:15px;font-weight:600;margin-top:5px;" id="det-venc">—</div></div>
+          <div class="mc"><div class="mc-label">Data de matrícula</div><div style="font-size:15px;font-weight:600;margin-top:5px;" id="det-matricula">—</div></div>
         </div>
         <div class="g2" style="margin-bottom:14px;">
           <div class="card">
@@ -494,7 +494,7 @@
     <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="ed-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="ed-numero" placeholder="123"></div></div>
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="ed-complemento" placeholder="Apto, Bloco, Sala..."></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
-    <div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+    <div class="fr2"><div class="fg"><label class="fl">Data de início</label><input class="fi" id="ed-inicio" type="date"></div><div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-aluno')">Cancelar</button><button class="btn btn-p" onclick="saveEditAluno()">Salvar alterações</button></div>
   </div>
 </div>
@@ -917,10 +917,14 @@ function renderAlunos(lista){
   document.getElementById('alunos-body').innerHTML=lista.map(a=>{
     const i=alunos.indexOf(a);
     const ativo=a.ativo!==false;
+    const valor=getPlanoPreco(a.plano);
+    const matricula=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
     return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
-      <td>${a.plano}</td><td>${a.prof}</td><td>${a.venc}</td>
-      <td><span class="badge ${a.status==='pago'?'bg':a.status==='pendente'?'ba':'br'}">${a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado'}</span></td>
+      <td>${a.plano}</td>
+      <td>R$ ${valor.toLocaleString('pt-BR')}</td>
+      <td>${a.prof}</td>
+      <td>${matricula}</td>
       <td><span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span></td>
     </tr>`;
   }).join('');
@@ -942,9 +946,11 @@ function showAlunoDetalhe(idx){
   document.getElementById('det-badges').innerHTML=
     `<span class="badge ${statusCls}">${statusLabel}</span>`+
     `<span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>`;
+  const valorAluno=getPlanoPreco(a.plano);
   document.getElementById('det-plano').textContent=a.plano||'—';
+  document.getElementById('det-valor').textContent='R$ '+valorAluno.toLocaleString('pt-BR');
   document.getElementById('det-prof').textContent=a.prof||'—';
-  document.getElementById('det-venc').textContent=a.venc||'—';
+  document.getElementById('det-matricula').textContent=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
   document.getElementById('det-tel').textContent=a.tel||'—';
   document.getElementById('det-email').textContent=a.email||'—';
   document.getElementById('det-cpf').textContent=a.cpf||'—';
@@ -1173,7 +1179,7 @@ function addAluno(){
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   }
   const valor=getPlanoPreco(plano);
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,hist:[]});
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,inicio,hist:[]});
   pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
@@ -1199,6 +1205,7 @@ function editarAluno(idx){
   document.getElementById('ed-bairro').value=a.bairro||'';
   document.getElementById('ed-plano').value=a.plano;
   document.getElementById('ed-prof').value=a.prof;
+  document.getElementById('ed-inicio').value=a.inicio||'';
   document.getElementById('ed-ativo').value=a.ativo!==false?'true':'false';
   openModal('modal-editar-aluno');
 }
@@ -1222,6 +1229,7 @@ function saveEditAluno(){
   a.bairro=document.getElementById('ed-bairro').value.trim();
   a.plano=document.getElementById('ed-plano').value;
   a.prof=document.getElementById('ed-prof').value;
+  a.inicio=document.getElementById('ed-inicio').value;
   a.ativo=document.getElementById('ed-ativo').value!=='false';
   const partes=nome.split(' ');
   a.ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
