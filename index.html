@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flex Flow — Gestão do Estúdio</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -155,7 +157,8 @@
     #tbl-alunos th:nth-child(2), #tbl-alunos td:nth-child(2),
     #tbl-alunos th:nth-child(3), #tbl-alunos td:nth-child(3),
     #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
-    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
+    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6),
+    #tbl-alunos th:nth-child(7), #tbl-alunos td:nth-child(7) { display: none; }
     #tbl-pagamentos th:nth-child(2), #tbl-pagamentos td:nth-child(2),
     #tbl-pagamentos th:nth-child(4), #tbl-pagamentos td:nth-child(4),
     #tbl-pagamentos th:nth-child(6), #tbl-pagamentos td:nth-child(6) { display: none; }
@@ -166,6 +169,14 @@
 </style>
 </head>
 <body>
+
+<!-- SYNC OVERLAY -->
+<div id="sync-overlay" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,0.9);z-index:400;align-items:center;justify-content:center;flex-direction:column;gap:10px;">
+  <div style="width:36px;height:36px;border:3px solid var(--bg-tertiary);border-top-color:#378add;border-radius:50%;animation:spin .8s linear infinite;"></div>
+  <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Sincronizando dados...</div>
+  <div style="font-size:12px;color:var(--text-secondary);">Conectando ao Firebase</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 
 <!-- AUTH SCREEN -->
 <div id="auth-screen">
@@ -223,15 +234,19 @@
 
       <!-- DASHBOARD -->
       <div id="page-dashboard">
-        <div class="g4">
-          <div class="mc"><div class="mc-label">Total de alunos</div><div class="mc-val" id="dash-total-alunos">—</div><div class="mc-sub green">+3 este mês</div></div>
-          <div class="mc"><div class="mc-label">Receita mensal</div><div class="mc-val">R$ 14.200</div><div class="mc-sub green">+8% vs abril</div></div>
-          <div class="mc"><div class="mc-label">Pgtos pendentes</div><div class="mc-val" id="dash-pend-count">—</div><div class="mc-sub red" id="dash-pend-val">—</div></div>
-          <div class="mc"><div class="mc-label">Professores ativos</div><div class="mc-val">4</div><div class="mc-sub">2 turmas hoje</div></div>
+        <div class="g3">
+          <div class="mc"><div class="mc-label">Alunos ativos</div><div class="mc-val" id="dash-alunos-ativos">—</div><div class="mc-sub" id="dash-alunos-ativos-sub"></div></div>
+          <div class="mc"><div class="mc-label">Alunos pagos no mês</div><div class="mc-val green" id="dash-alunos-pagos">—</div><div class="mc-sub" id="dash-alunos-pagos-sub"></div></div>
+          <div class="mc"><div class="mc-label">Professores ativos</div><div class="mc-val" id="dash-prof-count">—</div><div class="mc-sub" id="dash-prof-sub"></div></div>
+        </div>
+        <div class="g3">
+          <div class="mc"><div class="mc-label">Receita prevista no mês</div><div class="mc-val" id="dash-receita-prevista">—</div><div class="mc-sub" id="dash-receita-prevista-sub"></div></div>
+          <div class="mc"><div class="mc-label">Receita realizada no mês</div><div class="mc-val green" id="dash-receita-realizada">—</div><div class="mc-sub" id="dash-receita-realizada-sub"></div></div>
+          <div class="mc"><div class="mc-label">Pagamentos pendentes</div><div class="mc-val amber" id="dash-pend-count">—</div><div class="mc-sub red" id="dash-pend-val">—</div></div>
         </div>
         <div class="g2">
           <div class="card">
-            <div class="sec-title">Receita vs despesa — últimos 6 meses</div>
+            <div class="sec-title">Receita vs Despesa — últimos 6 meses</div>
             <div style="position:relative;width:100%;height:200px;"><canvas id="chart-dash"></canvas></div>
             <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text-secondary);">
               <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block;"></span>Receita</span>
@@ -241,37 +256,37 @@
           <div class="card">
             <div class="sec-title">Distribuição por plano</div>
             <div style="position:relative;width:100%;height:200px;"><canvas id="chart-planos"></canvas></div>
-            <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-secondary);">
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#378ADD;display:inline-block;"></span>Mensal 58%</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#7F77DD;display:inline-block;"></span>Trimestral 26%</span>
-              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block;"></span>Semestral 16%</span>
-            </div>
+            <div id="dash-plano-legend" style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-secondary);flex-wrap:wrap;"></div>
           </div>
         </div>
         <div class="card">
-          <div class="sec-title">Alertas</div>
-          <div class="fe"><span>Carlos Souza — vencimento amanhã (Mensal)</span><span class="badge ba">Pendente</span></div>
-          <div class="fe"><span>Patricia Nunes — 3 dias em atraso</span><span class="badge br">Atrasado</span></div>
-          <div class="fe"><span>Juliana Castro — vencimento em 2 dias</span><span class="badge ba">Pendente</span></div>
+          <div class="sec-title">Alertas de pagamento</div>
+          <div id="dash-alertas"><div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">Nenhum alerta ativo</div></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <div class="sec-title">Alunos vencidos</div>
+          <div id="dash-vencidos"><div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">Nenhum aluno vencido</div></div>
         </div>
         <div class="card" style="margin-top:14px;">
           <div class="sec-title">Alunos por professor</div>
-          <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>Mariana Silva</span><span style="color:var(--text-secondary);">14 alunos</span></div><div class="pb"><div class="pf" style="width:70%;"></div></div></div>
-          <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>Lucas Ferreira</span><span style="color:var(--text-secondary);">11 alunos</span></div><div class="pb"><div class="pf" style="width:55%;"></div></div></div>
-          <div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>Juliana Ramos</span><span style="color:var(--text-secondary);">8 alunos</span></div><div class="pb"><div class="pf" style="width:40%;"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>Rafael Duarte</span><span style="color:var(--text-secondary);">5 alunos</span></div><div class="pb"><div class="pf" style="width:25%;"></div></div></div>
+          <div id="dash-prof-barras"></div>
         </div>
       </div>
 
       <!-- ALUNOS -->
       <div id="page-alunos" class="hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;">
           <input class="si" id="busca-aluno" placeholder="Buscar aluno..." oninput="filterAlunos(this.value)" style="width:220px;">
           <button class="btn btn-p" onclick="openModal('modal-aluno')">+ Novo aluno</button>
         </div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;" id="alunos-filtros">
+          <button class="tab-btn active" onclick="filterAlunoStatus('todos',this)">Todos</button>
+          <button class="tab-btn" onclick="filterAlunoStatus('ativos',this)">Ativos</button>
+          <button class="tab-btn" onclick="filterAlunoStatus('inativos',this)">Inativos</button>
+        </div>
         <div class="card" style="padding:0;overflow:hidden;">
           <table class="tbl" id="tbl-alunos">
-            <thead><tr><th style="width:22%">Aluno</th><th style="width:13%">Plano</th><th style="width:17%">Professor</th><th style="width:11%">Vencimento</th><th style="width:10%">Status</th><th style="width:11%">Histórico</th><th style="width:16%">Ações</th></tr></thead>
+            <thead><tr><th style="width:19%">Aluno</th><th style="width:12%">Plano</th><th style="width:15%">Professor</th><th style="width:10%">Vencimento</th><th style="width:9%">Status</th><th style="width:9%">Situação</th><th style="width:10%">Histórico</th><th style="width:16%">Ações</th></tr></thead>
             <tbody id="alunos-body"></tbody>
           </table>
         </div>
@@ -315,13 +330,13 @@
       <!-- FLUXO DE CAIXA -->
       <div id="page-fluxo" class="hidden">
         <div class="g3">
-          <div class="mc"><div class="mc-label">Receitas (maio)</div><div class="mc-val green">R$ 14.200</div></div>
-          <div class="mc"><div class="mc-label">Despesas (maio)</div><div class="mc-val red">R$ 7.800</div></div>
-          <div class="mc"><div class="mc-label">Saldo do mês</div><div class="mc-val">R$ 6.400</div><div class="mc-sub green">Positivo</div></div>
+          <div class="mc"><div class="mc-label" id="fluxo-label-rec">Receitas</div><div class="mc-val green" id="fluxo-receita">—</div></div>
+          <div class="mc"><div class="mc-label" id="fluxo-label-desp">Despesas</div><div class="mc-val red" id="fluxo-despesa">—</div></div>
+          <div class="mc"><div class="mc-label">Saldo do mês</div><div class="mc-val" id="fluxo-saldo">—</div><div class="mc-sub" id="fluxo-saldo-sub"></div></div>
         </div>
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <div class="sec-title" style="margin:0;">Lançamentos — Maio 2025</div>
+            <div class="sec-title" style="margin:0;" id="fluxo-titulo">Lançamentos</div>
             <button class="btn btn-p" onclick="openModal('modal-lancamento')">+ Novo lançamento</button>
           </div>
           <div id="fluxo-list"></div>
@@ -417,6 +432,7 @@
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="in-complemento" placeholder="Apto, Bloco, Sala..."></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
     <div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div>
+    <div class="fg"><label class="fl">Situação</label><select class="fi" id="in-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-aluno')">Cancelar</button><button class="btn btn-p" onclick="addAluno()">Cadastrar aluno</button></div>
   </div>
 </div>
@@ -432,6 +448,7 @@
     <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="ed-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="ed-numero" placeholder="123"></div></div>
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="ed-complemento" placeholder="Apto, Bloco, Sala..."></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
+    <div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-aluno')">Cancelar</button><button class="btn btn-p" onclick="saveEditAluno()">Salvar alterações</button></div>
   </div>
 </div>
@@ -563,15 +580,32 @@ const defaultPlanos=[
   {nome:'Plano semestral',valor:1800,duracao:'Semestral',aulasSemanais:3,desc:'3x por semana · 72 aulas\nEconomia de R$ 300'},
 ];
 
+// ── FIREBASE ──────────────────────────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyB4FaoH4xBCJgSDZlHriI9yYAktuT3PObQ",
+  authDomain:"flex-flow-1328c.firebaseapp.com",
+  projectId:"flex-flow-1328c",
+  storageBucket:"flex-flow-1328c.firebasestorage.app",
+  messagingSenderId:"608155185696",
+  appId:"1:608155185696:web:66bf60bcb2811ee96e0245"
+});
+const db=firebase.firestore();
+// ─────────────────────────────────────────────────────────────────────────────
+
 let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null;
 
 function save(){
   if(!currentUser)return;
+  // Save locally for instant feedback
   localStorage.setItem('ff_alunos_'+currentUser,JSON.stringify(alunos));
   localStorage.setItem('ff_pagamentos_'+currentUser,JSON.stringify(pagamentos));
   localStorage.setItem('ff_fluxo_'+currentUser,JSON.stringify(fluxo));
   localStorage.setItem('ff_professores_'+currentUser,JSON.stringify(professores));
   localStorage.setItem('ff_planos_'+currentUser,JSON.stringify(planos));
+  // Sync to Firebase (fire-and-forget)
+  db.collection('users').doc(currentUser)
+    .set({alunos,pagamentos,fluxo,professores,planos})
+    .catch(e=>console.warn('Firebase sync error:',e));
 }
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
@@ -588,19 +622,43 @@ async function doLogin(){
   if(!users[u]){setAuthErr('auth-err','Usuário não encontrado.');return;}
   const h=await sha256(p);
   if(h!==users[u].hash){setAuthErr('auth-err','Senha incorreta.');return;}
-  startSession(u);
+  await startSession(u);
 }
-function startSession(username){
+async function startSession(username){
   currentUser=username;
   localStorage.setItem('ff_current_user',username);
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('user-badge').textContent=username;
   document.getElementById('sidebar-username').textContent=username;
-  alunos=JSON.parse(localStorage.getItem('ff_alunos_'+username))||defaultAlunos;
-  pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+username))||defaultPagamentos;
-  fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+username))||defaultFluxo;
-  professores=JSON.parse(localStorage.getItem('ff_professores_'+username))||defaultProfessores;
-  planos=JSON.parse(localStorage.getItem('ff_planos_'+username))||defaultPlanos;
+  // Show loading spinner
+  document.getElementById('sync-overlay').style.display='flex';
+  try {
+    const doc=await db.collection('users').doc(username).get();
+    if(doc.exists){
+      const d=doc.data();
+      alunos=d.alunos||defaultAlunos;
+      pagamentos=d.pagamentos||defaultPagamentos;
+      fluxo=d.fluxo||defaultFluxo;
+      professores=d.professores||defaultProfessores;
+      planos=d.planos||defaultPlanos;
+    } else {
+      // First login on this device — migrate localStorage data (if any) to Firebase
+      alunos=JSON.parse(localStorage.getItem('ff_alunos_'+username))||defaultAlunos;
+      pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+username))||defaultPagamentos;
+      fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+username))||defaultFluxo;
+      professores=JSON.parse(localStorage.getItem('ff_professores_'+username))||defaultProfessores;
+      planos=JSON.parse(localStorage.getItem('ff_planos_'+username))||defaultPlanos;
+      save(); // upload to Firebase
+    }
+  } catch(e) {
+    console.warn('Firebase offline, usando dados locais:',e);
+    alunos=JSON.parse(localStorage.getItem('ff_alunos_'+username))||defaultAlunos;
+    pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+username))||defaultPagamentos;
+    fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+username))||defaultFluxo;
+    professores=JSON.parse(localStorage.getItem('ff_professores_'+username))||defaultProfessores;
+    planos=JSON.parse(localStorage.getItem('ff_planos_'+username))||defaultPlanos;
+  }
+  document.getElementById('sync-overlay').style.display='none';
   renderProfessores();
   renderPlanos();
   renderAlunos(alunos);
@@ -636,15 +694,172 @@ async function addNovoUsuario(){
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_FULL=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const avCores=['av-b','av-t','av-p','av-c'];
-const planoPrices={'Mensal':350,'Trimestral':900,'Semestral':1800};
+
+function getPlanoPreco(duracao){
+  const p=planos.find(x=>x.duracao===duracao);
+  return p?p.valor:350;
+}
+
+function parseValorNum(v){
+  return parseFloat((v||'0').replace(/[^0-9,]/g,'').replace(',','.'))||0;
+}
+function parseVencMes(venc){
+  // Returns {mes, ano} from DD/MM string using current year
+  if(!venc||venc==='—')return null;
+  const parts=venc.split('/');
+  if(parts.length<2)return null;
+  const d=parseInt(parts[0]),m=parseInt(parts[1]);
+  if(!d||!m)return null;
+  return {mes:m-1,dia:d}; // mes is 0-indexed
+}
 
 function updateDashboard(){
-  document.getElementById('dash-total-alunos').textContent=alunos.length;
-  const pend=pagamentos.filter(p=>p.status!=='pago');
-  document.getElementById('dash-pend-count').textContent=pend.length;
-  const totalPend=pend.reduce((s,p)=>s+parseInt((p.valor||'0').replace(/[^0-9]/g,'')),0);
+  const now=new Date();
+  const mesAtual=now.getMonth(), anoAtual=now.getFullYear();
+  const mesNome=MESES_FULL[mesAtual];
+
+  // Row 1 — Alunos ativos
+  const alunosAtivos=alunos.filter(a=>a.ativo!==false);
+  document.getElementById('dash-alunos-ativos').textContent=alunosAtivos.length;
+  document.getElementById('dash-alunos-ativos-sub').textContent=alunosAtivos.length+' ativo'+(alunosAtivos.length!==1?'s':'');
+
+  // Row 1 — Alunos pagos no mês (pagamentos com status=pago e venc no mês atual)
+  const pagosMes=pagamentos.filter(p=>{
+    if(p.status!=='pago')return false;
+    const vm=parseVencMes(p.venc);
+    return vm&&vm.mes===mesAtual;
+  });
+  document.getElementById('dash-alunos-pagos').textContent=pagosMes.length;
+  document.getElementById('dash-alunos-pagos-sub').textContent=mesNome+' '+anoAtual;
+
+  // Row 1 — Professores ativos
+  const profAtivos=professores.filter(p=>p.status==='Ativo'||p.status==='Ativa').length;
+  document.getElementById('dash-prof-count').textContent=profAtivos;
+  document.getElementById('dash-prof-sub').textContent=professores.length+' professor'+(professores.length!==1?'es':'');
+
+  // Row 2 — Receita prevista (todos pagamentos do mês, pagos ou não)
+  const prevMes=pagamentos.filter(p=>{
+    const vm=parseVencMes(p.venc);
+    return vm&&vm.mes===mesAtual;
+  });
+  const recPrevista=prevMes.reduce((s,p)=>s+parseValorNum(p.valor),0);
+  document.getElementById('dash-receita-prevista').textContent='R$ '+recPrevista.toLocaleString('pt-BR');
+  document.getElementById('dash-receita-prevista-sub').textContent=mesNome+' '+anoAtual;
+
+  // Row 2 — Receita realizada (pagos no mês)
+  const recRealizada=pagosMes.reduce((s,p)=>s+parseValorNum(p.valor),0);
+  document.getElementById('dash-receita-realizada').textContent='R$ '+recRealizada.toLocaleString('pt-BR');
+  document.getElementById('dash-receita-realizada-sub').textContent=pagosMes.length+' pagamento'+(pagosMes.length!==1?'s':'');
+
+  // Row 2 — Pagamentos pendentes (todos pendentes/atrasados)
+  const pendentes=pagamentos.filter(p=>p.status!=='pago');
+  const totalPend=pendentes.reduce((s,p)=>s+parseValorNum(p.valor),0);
+  document.getElementById('dash-pend-count').textContent=pendentes.length;
   document.getElementById('dash-pend-val').textContent='R$ '+totalPend.toLocaleString('pt-BR')+' em aberto';
+
+  // Alertas de pagamento
+  renderDashAlerts();
+  // Alunos vencidos
+  renderDashVencidos();
+  // Alunos por professor
+  renderDashProfBarras();
+  // Gráficos
+  updateDashChart();
+  updatePlanChart();
+}
+
+function renderDashAlerts(){
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const alertas=[];
+  pagamentos.forEach((p,i)=>{
+    if(p.status==='pago')return;
+    if(!p.venc||p.venc==='—')return;
+    const [d,m]=p.venc.split('/').map(Number);
+    if(!d||!m)return;
+    const dt=new Date(hoje.getFullYear(),m-1,d);
+    if(dt<hoje&&(hoje-dt)>180*864e5)dt.setFullYear(dt.getFullYear()+1);
+    const diff=Math.round((dt-hoje)/864e5);
+    if(diff<0)alertas.push({aluno:p.aluno,plano:p.plano,msg:Math.abs(diff)+' dia'+(Math.abs(diff)!==1?'s':'')+' em atraso',tipo:'br'});
+    else if(diff<=7)alertas.push({aluno:p.aluno,plano:p.plano,msg:diff===0?'vence hoje':diff===1?'vence amanhã':'vence em '+diff+' dias',tipo:diff<=1?'ba':'bb'});
+  });
+  const el=document.getElementById('dash-alertas');
+  if(!el)return;
+  if(alertas.length===0){el.innerHTML='<div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">Nenhum alerta ativo</div>';return;}
+  el.innerHTML=alertas.map(a=>`<div class="fe"><span>${a.aluno} — ${a.plano} · <span style="font-weight:500;">${a.msg}</span></span><span class="badge ${a.tipo}">${a.tipo==='br'?'Atrasado':a.tipo==='ba'?'Pendente':'Próximo'}</span></div>`).join('');
+}
+
+function renderDashProfBarras(){
+  const el=document.getElementById('dash-prof-barras');
+  if(!el)return;
+  if(professores.length===0){el.innerHTML='<div style="font-size:13px;color:var(--text-secondary);">Nenhum professor cadastrado.</div>';return;}
+  const max=Math.max(...professores.map(p=>alunos.filter(a=>a.prof===p.nome).length),1);
+  el.innerHTML=professores.map(p=>{
+    const cnt=alunos.filter(a=>a.prof===p.nome).length;
+    const pct=Math.round(cnt/max*100);
+    return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>${p.nome}</span><span style="color:var(--text-secondary);">${cnt} aluno${cnt!==1?'s':''}</span></div><div class="pb"><div class="pf" style="width:${pct}%;"></div></div></div>`;
+  }).join('');
+}
+
+function renderDashVencidos(){
+  const el=document.getElementById('dash-vencidos');
+  if(!el)return;
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const vencidos=pagamentos.filter(p=>{
+    if(p.status==='pago')return false;
+    const vm=parseVencMes(p.venc);
+    if(!vm)return false;
+    const dt=new Date(hoje.getFullYear(),vm.mes,vm.dia);
+    if(dt>hoje&&(dt-hoje)>180*864e5)dt.setFullYear(dt.getFullYear()-1);
+    return dt<hoje;
+  });
+  if(vencidos.length===0){el.innerHTML='<div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">Nenhum aluno vencido</div>';return;}
+  el.innerHTML=vencidos.map(p=>{
+    const vm=parseVencMes(p.venc);
+    const dt=new Date(hoje.getFullYear(),vm.mes,vm.dia);
+    if(dt>hoje&&(dt-hoje)>180*864e5)dt.setFullYear(dt.getFullYear()-1);
+    const dias=Math.round((hoje-dt)/864e5);
+    return `<div class="fe"><span>${p.aluno} — ${p.plano} · <strong>${dias} dia${dias!==1?'s':''} em atraso</strong></span><span class="badge br">Vencido</span></div>`;
+  }).join('');
+}
+
+let dashChart=null;
+function updateDashChart(){
+  if(!dashChart)return;
+  const now=new Date();
+  const labels=[],recData=[],despData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const m=d.getMonth(),y=d.getFullYear();
+    labels.push(MES[m]);
+    let rec=0,desp=0;
+    fluxo.forEach(f=>{
+      if(!f.dataRaw)return;
+      const fd=new Date(f.dataRaw+'T00:00:00');
+      if(fd.getMonth()!==m||fd.getFullYear()!==y)return;
+      const v=parseValorNum(f.valor);
+      if(f.tipo==='income')rec+=v; else desp+=v;
+    });
+    recData.push(rec);
+    despData.push(desp);
+  }
+  dashChart.data.labels=labels;
+  dashChart.data.datasets[0].data=recData;
+  dashChart.data.datasets[1].data=despData;
+  dashChart.update();
+}
+
+let planChart=null;
+function updatePlanChart(){
+  const canvas=document.getElementById('chart-planos');
+  const legendEl=document.getElementById('dash-plano-legend');
+  if(!canvas)return;
+  const cores=['#378ADD','#7F77DD','#1D9E75','#F5A623','#E24B4A','#888780'];
+  const dados=planos.map(p=>alunos.filter(a=>a.plano===p.duracao).length);
+  const total=dados.reduce((s,v)=>s+v,0)||1;
+  if(planChart){planChart.data.labels=planos.map(p=>p.nome);planChart.data.datasets[0].data=dados;planChart.update();}
+  if(legendEl)legendEl.innerHTML=planos.map((p,i)=>{const pct=Math.round(dados[i]/total*100);return `<span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:${cores[i%cores.length]};display:inline-block;"></span>${p.nome} ${pct}%</span>`;}).join('');
 }
 
 function syncPagAluno(){
@@ -655,10 +870,12 @@ function syncPagAluno(){
 function renderAlunos(lista){
   document.getElementById('alunos-body').innerHTML=lista.map(a=>{
     const i=alunos.indexOf(a);
+    const ativo=a.ativo!==false;
     return `<tr>
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
       <td>${a.plano}</td><td>${a.prof}</td><td>${a.venc}</td>
       <td><span class="badge ${a.status==='pago'?'bg':a.status==='pendente'?'ba':'br'}">${a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado'}</span></td>
+      <td><span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span></td>
       <td><button class="btn bb" style="font-size:11px;padding:4px 8px;" onclick="showHistorico(${i})">Ver histórico</button></td>
       <td style="white-space:nowrap;">
         <button class="btn" style="font-size:11px;padding:4px 8px;" onclick="editarAluno(${i})">Editar</button>
@@ -669,7 +886,23 @@ function renderAlunos(lista){
   syncPagAluno();
 }
 
-function filterAlunos(q){renderAlunos(alunos.filter(a=>a.nome.toLowerCase().includes(q.toLowerCase())));}
+let currentAlunoFilter='todos';
+function filterAlunoStatus(f,btn){
+  currentAlunoFilter=f;
+  document.querySelectorAll('#alunos-filtros .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const q=document.getElementById('busca-aluno').value.toLowerCase();
+  let lista=alunos.filter(a=>a.nome.toLowerCase().includes(q));
+  if(f==='ativos')lista=lista.filter(a=>a.ativo!==false);
+  if(f==='inativos')lista=lista.filter(a=>a.ativo===false);
+  renderAlunos(lista);
+}
+function filterAlunos(q){
+  let lista=alunos.filter(a=>a.nome.toLowerCase().includes(q.toLowerCase()));
+  if(currentAlunoFilter==='ativos')lista=lista.filter(a=>a.ativo!==false);
+  if(currentAlunoFilter==='inativos')lista=lista.filter(a=>a.ativo===false);
+  renderAlunos(lista);
+}
 
 function showHistorico(idx){
   const a=alunos[idx];
@@ -726,12 +959,37 @@ function marcarPago(idx){
 
 function filterPag(f,btn){
   currentPagFilter=f;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
+  document.querySelectorAll('#page-pagamentos .tab-btn').forEach(b=>{
+    b.classList.toggle('active', btn ? b===btn : b.textContent.trim().toLowerCase()===({todos:'todos',pago:'pagos',pendente:'pendentes',atrasado:'atrasados'}[f]||f));
+  });
   renderPagamentos(f==='todos'?pagamentos:pagamentos.filter(p=>p.status===f));
 }
 
 function renderFluxo(){
+  // Calcular métricas do mês atual
+  const now=new Date();
+  const mesAtual=now.getMonth(), anoAtual=now.getFullYear();
+  let rec=0,desp=0;
+  fluxo.forEach(f=>{
+    if(!f.dataRaw)return;
+    const d=new Date(f.dataRaw+'T00:00:00');
+    if(d.getMonth()!==mesAtual||d.getFullYear()!==anoAtual)return;
+    const v=parseValorNum(f.valor);
+    if(f.tipo==='income')rec+=v; else desp+=v;
+  });
+  const saldo=rec-desp;
+  const mesNome=MESES_FULL[mesAtual];
+  document.getElementById('fluxo-label-rec').textContent='Receitas ('+mesNome+')';
+  document.getElementById('fluxo-label-desp').textContent='Despesas ('+mesNome+')';
+  document.getElementById('fluxo-receita').textContent='R$ '+rec.toLocaleString('pt-BR');
+  document.getElementById('fluxo-despesa').textContent='R$ '+desp.toLocaleString('pt-BR');
+  document.getElementById('fluxo-saldo').textContent='R$ '+Math.abs(saldo).toLocaleString('pt-BR');
+  const saldoEl=document.getElementById('fluxo-saldo');
+  saldoEl.className='mc-val '+(saldo>=0?'green':'red');
+  document.getElementById('fluxo-saldo-sub').textContent=saldo>=0?'Positivo':'Negativo';
+  document.getElementById('fluxo-saldo-sub').className='mc-sub '+(saldo>=0?'green':'red');
+  document.getElementById('fluxo-titulo').textContent='Lançamentos — '+mesNome+' '+anoAtual;
+
   document.getElementById('fluxo-list').innerHTML=fluxo.map((f,i)=>`
     <div class="fe">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
@@ -793,8 +1051,11 @@ function showPage(p){
   document.querySelectorAll('.bn').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
   document.getElementById('topbar-title').textContent=titles[p]||p;
   if(p==='relatorios')setTimeout(buildRelatorioCharts,150);
+  if(p==='dashboard')updateDashboard();
   if(p==='professores')renderProfessores();
   if(p==='planos')renderPlanos();
+  if(p==='pagamentos')filterPag(currentPagFilter);
+  if(p==='fluxo')renderFluxo();
   if(p==='notificacoes')renderNotificacoes();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -818,8 +1079,9 @@ function addAluno(){
   const planoRaw=document.getElementById('in-plano').value;
   const prof=document.getElementById('in-prof').value;
   const inicio=document.getElementById('in-inicio').value;
+  const ativo=document.getElementById('in-ativo').value!=='false';
   if(!nome){alert('Informe o nome do aluno.');return;}
-  const plano=planoRaw.split(' —')[0];
+  const plano=planoRaw; // value attribute já é a duração (ex: "Mensal")
   const cor=avCores[alunos.length%4];
   const partes=nome.split(' ');
   const ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
@@ -829,8 +1091,8 @@ function addAluno(){
     d.setMonth(d.getMonth()+1);
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   }
-  const valor=planoPrices[plano]||350;
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,hist:[]});
+  const valor=getPlanoPreco(plano);
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,hist:[]});
   pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
@@ -856,6 +1118,7 @@ function editarAluno(idx){
   document.getElementById('ed-bairro').value=a.bairro||'';
   document.getElementById('ed-plano').value=a.plano;
   document.getElementById('ed-prof').value=a.prof;
+  document.getElementById('ed-ativo').value=a.ativo!==false?'true':'false';
   openModal('modal-editar-aluno');
 }
 
@@ -878,6 +1141,7 @@ function saveEditAluno(){
   a.bairro=document.getElementById('ed-bairro').value.trim();
   a.plano=document.getElementById('ed-plano').value;
   a.prof=document.getElementById('ed-prof').value;
+  a.ativo=document.getElementById('ed-ativo').value!=='false';
   const partes=nome.split(' ');
   a.ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
   if(oldNome!==nome){
@@ -1082,7 +1346,7 @@ function editarPagamento(idx){
   document.getElementById('ep-idx').value=idx;
   document.getElementById('ep-aluno').value=p.aluno;
   document.getElementById('ep-plano').value=p.plano;
-  const rawVal=parseFloat((p.valor||'0').replace(/[^0-9.,]/g,'').replace(',','.'))||0;
+  const rawVal=parseValorNum(p.valor);
   document.getElementById('ep-valor').value=rawVal;
   document.getElementById('ep-venc').value=p.vencRaw||'';
   document.getElementById('ep-forma').value=p.forma||'—';
@@ -1210,15 +1474,21 @@ function buildRelatorioCharts(){
   new Chart(document.getElementById('chart-prof'),{type:'bar',data:{labels:['Mariana Silva','Lucas Ferreira','Juliana Ramos','Rafael Duarte'],datasets:[{label:'Receita',data:[4900,3850,1800,0],backgroundColor:['#378ADD','#1D9E75','#7F77DD','#888780'],borderRadius:4}]},options:{...baseOpts,indexAxis:'y',scales:{x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>'R$'+Math.round(v/1000)+'k'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
 }
 
-window.addEventListener('DOMContentLoaded',()=>{
+window.addEventListener('DOMContentLoaded',async ()=>{
+  // Garantir que o usuário admin padrão existe
+  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
+  if(!users['admin']){
+    users['admin']={hash:'8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'};
+    localStorage.setItem('ff_users',JSON.stringify(users));
+  }
   // Restore session from localStorage (persists across browser restarts)
   const saved=localStorage.getItem('ff_current_user');
-  if(saved){startSession(saved);}
+  if(saved){await startSession(saved);}
   // Enter key shortcut for login form
   document.getElementById('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  // Dashboard charts (always built, data irrelevant until login)
-  new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:['Dez','Jan','Fev','Mar','Abr','Mai'],datasets:[{label:'Receita',data:[11200,10200,11800,12500,13100,14200],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[7200,7000,7400,7600,7700,7800],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
-  new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:['Mensal','Trimestral','Semestral'],datasets:[{data:[22,10,6],backgroundColor:['#378ADD','#7F77DD','#1D9E75'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+  // Dashboard charts (always built, data loaded after login)
+  dashChart=new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:[],datasets:[{label:'Receita',data:[],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
+  planChart=new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:['#378ADD','#7F77DD','#1D9E75','#F5A623','#E24B4A'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 });
 </script>
 
