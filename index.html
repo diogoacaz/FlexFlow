@@ -429,6 +429,36 @@
         </div>
       </div>
 
+      <!-- FICHA DO PROFESSOR -->
+      <div id="page-professor-detalhe" class="hidden">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+          <button class="btn" onclick="showPage('professores')">&#8592; Voltar</button>
+          <span style="font-size:15px;font-weight:600;" id="pdet-nome-title">Professor</span>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div class="av" id="pdet-av" style="width:48px;height:48px;font-size:18px;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:17px;font-weight:600;" id="pdet-nome">—</div>
+              <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;" id="pdet-esp">—</div>
+              <div style="margin-top:7px;" id="pdet-status-badge"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;margin-top:4px;">
+              <button class="btn btn-p" style="font-size:13px;" onclick="editarProfessor(currentProfIdx)">Editar</button>
+              <button class="btn btn-d" style="font-size:13px;" onclick="excluirProfessor(currentProfIdx)">Excluir</button>
+            </div>
+          </div>
+        </div>
+        <div class="g2" style="margin-bottom:14px;">
+          <div class="mc"><div class="mc-label">Telefone</div><div style="font-size:14px;font-weight:600;margin-top:5px;" id="pdet-tel">—</div></div>
+          <div class="mc"><div class="mc-label">Alunos atribuídos</div><div style="font-size:22px;font-weight:600;margin-top:5px;" id="pdet-alunos-count">—</div></div>
+        </div>
+        <div class="card">
+          <div class="sec-title">Alunos atribuídos</div>
+          <div id="pdet-alunos-list"></div>
+        </div>
+      </div>
+
       <!-- NOTIFICAÇÕES -->
       <div id="page-notificacoes" class="hidden">
         <div class="g3" id="notif-metrics"></div>
@@ -1126,8 +1156,8 @@ function excluirLancamento(idx){
   renderFluxo();
 }
 
-const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','notificacoes','exportar'];
-const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno',notificacoes:'Notificações',exportar:'Exportar dados'};
+const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','notificacoes','exportar'];
+const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor',notificacoes:'Notificações',exportar:'Exportar dados'};
 const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar'];
 
 function showPage(p){
@@ -1297,6 +1327,41 @@ function addLancamento(){
 
 // ── PROFESSORES ──────────────────────────────────────────────────────────────
 const avCoresList=['av-b','av-t','av-p','av-c'];
+
+let currentProfIdx=null;
+function showProfessorDetalhe(idx){
+  currentProfIdx=idx;
+  const p=professores[idx];
+  const ini=p.nome.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const cor=avCoresList[idx%4];
+  const badgeCls=p.status==='Ativo'||p.status==='Ativa'?'bg':p.status==='Férias'?'ba':'br';
+  document.getElementById('pdet-nome-title').textContent=p.nome;
+  const avEl=document.getElementById('pdet-av');
+  avEl.className='av '+cor;
+  avEl.textContent=ini;
+  document.getElementById('pdet-nome').textContent=p.nome;
+  document.getElementById('pdet-esp').textContent=p.esp||'Sem especialidade informada';
+  document.getElementById('pdet-status-badge').innerHTML=`<span class="badge ${badgeCls}">${p.status}</span>`;
+  document.getElementById('pdet-tel').textContent=p.tel||'—';
+  const alunosDoProfessor=alunos.filter(a=>a.prof===p.nome);
+  document.getElementById('pdet-alunos-count').textContent=alunosDoProfessor.length;
+  document.getElementById('pdet-alunos-list').innerHTML=alunosDoProfessor.length?
+    alunosDoProfessor.map(a=>{
+      const ativo=a.ativo!==false;
+      return `<div class="fe">
+        <div class="row-fx" style="gap:9px;">
+          <div class="av ${a.cor}" style="flex-shrink:0;">${a.ini}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">${a.nome}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${a.plano}</div>
+          </div>
+        </div>
+        <span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>
+      </div>`;
+    }).join('')
+    :'<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">Nenhum aluno atribuído</div>';
+  showPage('professor-detalhe');
+}
 function syncProfSelects(){
   const opts=professores.map(p=>`<option>${p.nome}</option>`).join('');
   ['in-prof','ed-prof'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
@@ -1309,7 +1374,7 @@ function renderProfessores(){
     const cor=avCoresList[i%4];
     const badgeCls=p.status==='Ativo'||p.status==='Ativa'?'bg':p.status==='Férias'?'ba':'br';
     const alunosCount=alunos.filter(a=>a.prof===p.nome).length;
-    return `<div class="card">
+    return `<div class="card" style="cursor:pointer;" onclick="showProfessorDetalhe(${i})">
       <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;">
         <div class="av ${cor}">${ini}</div>
         <div style="min-width:0;flex:1;">
@@ -1319,13 +1384,8 @@ function renderProfessores(){
         <span class="badge ${badgeCls}" style="flex-shrink:0;">${p.status}</span>
       </div>
       <hr class="divider">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span>Alunos ativos</span><strong>${alunosCount}</strong></div>
-      ${p.tel?`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">${p.tel}</div>`:''}
-      <hr class="divider">
-      <div style="display:flex;gap:8px;">
-        <button class="btn" style="font-size:12px;flex:1;justify-content:center;" onclick="editarProfessor(${i})">Editar</button>
-        <button class="btn btn-d" style="font-size:12px;flex:1;justify-content:center;" onclick="excluirProfessor(${i})">Excluir</button>
-      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;"><span>Alunos atribuídos</span><strong>${alunosCount}</strong></div>
+      ${p.tel?`<div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">${p.tel}</div>`:''}
     </div>`;
   }).join('');
   syncProfSelects();
@@ -1359,11 +1419,15 @@ function saveEditProfessor(){
   if(oldNome!==nome)alunos.forEach(a=>{if(a.prof===oldNome)a.prof=nome;});
   save();renderProfessores();renderAlunos(alunos);
   closeModal('modal-editar-professor');
+  if(currentProfIdx!==null) showProfessorDetalhe(idx);
 }
 function excluirProfessor(idx){
   const p=professores[idx];
   if(!confirm('Excluir o professor "'+p.nome+'"?\nOs alunos associados ficarão sem professor.'))return;
-  professores.splice(idx,1);save();renderProfessores();
+  professores.splice(idx,1);
+  currentProfIdx=null;
+  save();renderProfessores();
+  showPage('professores');
 }
 
 // ── PLANOS ───────────────────────────────────────────────────────────────────
