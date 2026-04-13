@@ -459,6 +459,36 @@
         </div>
       </div>
 
+      <!-- FICHA DO PLANO -->
+      <div id="page-plano-detalhe" class="hidden">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+          <button class="btn" onclick="showPage('planos')">&#8592; Voltar</button>
+          <span style="font-size:15px;font-weight:600;" id="pldet-nome-title">Plano</span>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-size:18px;font-weight:700;" id="pldet-nome">—</div>
+              <div style="font-size:28px;font-weight:700;margin-top:6px;" id="pldet-valor">—</div>
+              <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;" id="pldet-desc">—</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button class="btn btn-p" style="font-size:13px;" onclick="editarPlano(currentPlanoIdx)">Editar</button>
+              <button class="btn btn-d" style="font-size:13px;" onclick="excluirPlano(currentPlanoIdx)">Excluir</button>
+            </div>
+          </div>
+        </div>
+        <div class="g3" style="margin-bottom:14px;">
+          <div class="mc"><div class="mc-label">Duração</div><div style="font-size:15px;font-weight:600;margin-top:5px;" id="pldet-duracao">—</div></div>
+          <div class="mc"><div class="mc-label">Aulas por semana</div><div style="font-size:22px;font-weight:600;margin-top:5px;" id="pldet-aulas">—</div></div>
+          <div class="mc"><div class="mc-label">Alunos neste plano</div><div style="font-size:22px;font-weight:600;margin-top:5px;" id="pldet-alunos-count">—</div></div>
+        </div>
+        <div class="card">
+          <div class="sec-title">Alunos neste plano</div>
+          <div id="pldet-alunos-list"></div>
+        </div>
+      </div>
+
       <!-- NOTIFICAÇÕES -->
       <div id="page-notificacoes" class="hidden">
         <div class="g3" id="notif-metrics"></div>
@@ -1156,8 +1186,8 @@ function excluirLancamento(idx){
   renderFluxo();
 }
 
-const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','notificacoes','exportar'];
-const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor',notificacoes:'Notificações',exportar:'Exportar dados'};
+const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','plano-detalhe','notificacoes','exportar'];
+const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano',notificacoes:'Notificações',exportar:'Exportar dados'};
 const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar'];
 
 function showPage(p){
@@ -1431,6 +1461,37 @@ function excluirProfessor(idx){
 }
 
 // ── PLANOS ───────────────────────────────────────────────────────────────────
+let currentPlanoIdx=null;
+function showPlanoDetalhe(idx){
+  currentPlanoIdx=idx;
+  const p=planos[idx];
+  const duracaoLabel={'Mensal':'/mês','Trimestral':'/3 meses','Semestral':'/6 meses','Anual':'/ano'}[p.duracao]||'';
+  document.getElementById('pldet-nome-title').textContent=p.nome;
+  document.getElementById('pldet-nome').textContent=p.nome;
+  document.getElementById('pldet-valor').innerHTML=`R$ ${p.valor.toLocaleString('pt-BR')}<span style="font-size:14px;font-weight:400;color:var(--text-secondary);">${duracaoLabel}</span>`;
+  document.getElementById('pldet-desc').textContent=p.desc||'—';
+  document.getElementById('pldet-duracao').textContent=p.duracao;
+  document.getElementById('pldet-aulas').textContent=p.aulasSemanais||'—';
+  const alunosDoPlan=alunos.filter(a=>a.plano===p.duracao);
+  document.getElementById('pldet-alunos-count').textContent=alunosDoPlan.length;
+  document.getElementById('pldet-alunos-list').innerHTML=alunosDoPlan.length?
+    alunosDoPlan.map(a=>{
+      const ativo=a.ativo!==false;
+      return `<div class="fe">
+        <div class="row-fx" style="gap:9px;">
+          <div class="av ${a.cor}" style="flex-shrink:0;">${a.ini}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">${a.nome}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${a.prof||'—'}</div>
+          </div>
+        </div>
+        <span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>
+      </div>`;
+    }).join('')
+    :'<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">Nenhum aluno neste plano</div>';
+  showPage('plano-detalhe');
+}
+
 function syncPlanoSelects(){
   const opts=planos.map(p=>`<option value="${p.duracao}">${p.nome} — R$ ${p.valor.toLocaleString('pt-BR')}</option>`).join('');
   ['in-plano','ed-plano'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
@@ -1441,18 +1502,14 @@ function renderPlanos(){
   grid.innerHTML=planos.map((p,i)=>{
     const duracaoLabel={'Mensal':'/mês','Trimestral':'/3 meses','Semestral':'/6 meses','Anual':'/ano'}[p.duracao]||'';
     const alunosCount=alunos.filter(a=>a.plano===p.duracao).length;
-    return `<div class="card" ${i===0?'style="border:2px solid #378add;"':''}>
+    return `<div class="card" style="cursor:pointer;${i===0?'border:2px solid #378add;':''}" onclick="showPlanoDetalhe(${i})">
       ${i===0?'<div class="badge bb" style="margin-bottom:10px;">Mais popular</div>':''}
       <div style="font-size:15px;font-weight:600;margin-bottom:4px;">${p.nome}</div>
       <div style="font-size:22px;font-weight:600;margin-bottom:8px;">R$ ${p.valor.toLocaleString('pt-BR')}<span style="font-size:13px;font-weight:400;color:var(--text-secondary);">${duracaoLabel}</span></div>
       <hr class="divider">
       <div style="font-size:12px;color:var(--text-secondary);line-height:1.9;">${(p.desc||'').replace(/\n/g,'<br>')}</div>
       <hr class="divider">
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${alunosCount} aluno${alunosCount!==1?'s':''} ativo${alunosCount!==1?'s':''}</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn" style="font-size:12px;flex:1;justify-content:center;" onclick="editarPlano(${i})">Editar</button>
-        <button class="btn btn-d" style="font-size:12px;flex:1;justify-content:center;" onclick="excluirPlano(${i})">Excluir</button>
-      </div>
+      <div style="font-size:12px;color:var(--text-secondary);">${alunosCount} aluno${alunosCount!==1?'s':''} neste plano</div>
     </div>`;
   }).join('');
   syncPlanoSelects();
@@ -1487,11 +1544,15 @@ function saveEditPlano(){
   planos[idx]={nome,valor,duracao:document.getElementById('epl-dur').value,aulasSemanais:parseInt(document.getElementById('epl-aulas').value)||0,desc:document.getElementById('epl-desc').value.trim()};
   save();renderPlanos();
   closeModal('modal-editar-plano');
+  if(currentPlanoIdx!==null) showPlanoDetalhe(idx);
 }
 function excluirPlano(idx){
   const p=planos[idx];
   if(!confirm('Excluir o plano "'+p.nome+'"?\nOs alunos com este plano não serão afetados.'))return;
-  planos.splice(idx,1);save();renderPlanos();
+  planos.splice(idx,1);
+  currentPlanoIdx=null;
+  save();renderPlanos();
+  showPage('planos');
 }
 
 // ── PAGAMENTOS EDITAR/EXCLUIR ────────────────────────────────────────────────
