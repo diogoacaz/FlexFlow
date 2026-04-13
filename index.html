@@ -157,7 +157,8 @@
     #tbl-alunos th:nth-child(2), #tbl-alunos td:nth-child(2),
     #tbl-alunos th:nth-child(3), #tbl-alunos td:nth-child(3),
     #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
-    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
+    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6),
+    #tbl-alunos th:nth-child(7), #tbl-alunos td:nth-child(7) { display: none; }
     #tbl-pagamentos th:nth-child(2), #tbl-pagamentos td:nth-child(2),
     #tbl-pagamentos th:nth-child(4), #tbl-pagamentos td:nth-child(4),
     #tbl-pagamentos th:nth-child(6), #tbl-pagamentos td:nth-child(6) { display: none; }
@@ -233,15 +234,19 @@
 
       <!-- DASHBOARD -->
       <div id="page-dashboard">
-        <div class="g4">
-          <div class="mc"><div class="mc-label">Total de alunos</div><div class="mc-val" id="dash-total-alunos">—</div><div class="mc-sub green" id="dash-alunos-sub"></div></div>
-          <div class="mc"><div class="mc-label">Receita do mês</div><div class="mc-val green" id="dash-receita-val">—</div><div class="mc-sub" id="dash-receita-sub"></div></div>
-          <div class="mc"><div class="mc-label">Pgtos pendentes</div><div class="mc-val" id="dash-pend-count">—</div><div class="mc-sub red" id="dash-pend-val">—</div></div>
+        <div class="g3">
+          <div class="mc"><div class="mc-label">Alunos ativos</div><div class="mc-val" id="dash-alunos-ativos">—</div><div class="mc-sub" id="dash-alunos-ativos-sub"></div></div>
+          <div class="mc"><div class="mc-label">Alunos pagos no mês</div><div class="mc-val green" id="dash-alunos-pagos">—</div><div class="mc-sub" id="dash-alunos-pagos-sub"></div></div>
           <div class="mc"><div class="mc-label">Professores ativos</div><div class="mc-val" id="dash-prof-count">—</div><div class="mc-sub" id="dash-prof-sub"></div></div>
+        </div>
+        <div class="g3">
+          <div class="mc"><div class="mc-label">Receita prevista no mês</div><div class="mc-val" id="dash-receita-prevista">—</div><div class="mc-sub" id="dash-receita-prevista-sub"></div></div>
+          <div class="mc"><div class="mc-label">Receita realizada no mês</div><div class="mc-val green" id="dash-receita-realizada">—</div><div class="mc-sub" id="dash-receita-realizada-sub"></div></div>
+          <div class="mc"><div class="mc-label">Pagamentos pendentes</div><div class="mc-val amber" id="dash-pend-count">—</div><div class="mc-sub red" id="dash-pend-val">—</div></div>
         </div>
         <div class="g2">
           <div class="card">
-            <div class="sec-title">Receita vs despesa — últimos 6 meses</div>
+            <div class="sec-title">Receita vs Despesa — últimos 6 meses</div>
             <div style="position:relative;width:100%;height:200px;"><canvas id="chart-dash"></canvas></div>
             <div style="display:flex;gap:16px;margin-top:10px;font-size:11px;color:var(--text-secondary);">
               <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block;"></span>Receita</span>
@@ -259,6 +264,10 @@
           <div id="dash-alertas"><div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">Nenhum alerta ativo</div></div>
         </div>
         <div class="card" style="margin-top:14px;">
+          <div class="sec-title">Alunos vencidos</div>
+          <div id="dash-vencidos"><div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">Nenhum aluno vencido</div></div>
+        </div>
+        <div class="card" style="margin-top:14px;">
           <div class="sec-title">Alunos por professor</div>
           <div id="dash-prof-barras"></div>
         </div>
@@ -266,13 +275,18 @@
 
       <!-- ALUNOS -->
       <div id="page-alunos" class="hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;">
           <input class="si" id="busca-aluno" placeholder="Buscar aluno..." oninput="filterAlunos(this.value)" style="width:220px;">
           <button class="btn btn-p" onclick="openModal('modal-aluno')">+ Novo aluno</button>
         </div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;" id="alunos-filtros">
+          <button class="tab-btn active" onclick="filterAlunoStatus('todos',this)">Todos</button>
+          <button class="tab-btn" onclick="filterAlunoStatus('ativos',this)">Ativos</button>
+          <button class="tab-btn" onclick="filterAlunoStatus('inativos',this)">Inativos</button>
+        </div>
         <div class="card" style="padding:0;overflow:hidden;">
           <table class="tbl" id="tbl-alunos">
-            <thead><tr><th style="width:22%">Aluno</th><th style="width:13%">Plano</th><th style="width:17%">Professor</th><th style="width:11%">Vencimento</th><th style="width:10%">Status</th><th style="width:11%">Histórico</th><th style="width:16%">Ações</th></tr></thead>
+            <thead><tr><th style="width:19%">Aluno</th><th style="width:12%">Plano</th><th style="width:15%">Professor</th><th style="width:10%">Vencimento</th><th style="width:9%">Status</th><th style="width:9%">Situação</th><th style="width:10%">Histórico</th><th style="width:16%">Ações</th></tr></thead>
             <tbody id="alunos-body"></tbody>
           </table>
         </div>
@@ -418,6 +432,7 @@
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="in-complemento" placeholder="Apto, Bloco, Sala..."></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
     <div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div>
+    <div class="fg"><label class="fl">Situação</label><select class="fi" id="in-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-aluno')">Cancelar</button><button class="btn btn-p" onclick="addAluno()">Cadastrar aluno</button></div>
   </div>
 </div>
@@ -433,6 +448,7 @@
     <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="ed-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="ed-numero" placeholder="123"></div></div>
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="ed-complemento" placeholder="Apto, Bloco, Sala..."></div>
     <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
+    <div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-aluno')">Cancelar</button><button class="btn btn-p" onclick="saveEditAluno()">Salvar alterações</button></div>
   </div>
 </div>
@@ -686,45 +702,71 @@ function getPlanoPreco(duracao){
   return p?p.valor:350;
 }
 
+function parseValorNum(v){
+  return parseFloat((v||'0').replace(/[^0-9,]/g,'').replace(',','.'))||0;
+}
+function parseVencMes(venc){
+  // Returns {mes, ano} from DD/MM string using current year
+  if(!venc||venc==='—')return null;
+  const parts=venc.split('/');
+  if(parts.length<2)return null;
+  const d=parseInt(parts[0]),m=parseInt(parts[1]);
+  if(!d||!m)return null;
+  return {mes:m-1,dia:d}; // mes is 0-indexed
+}
+
 function updateDashboard(){
   const now=new Date();
   const mesAtual=now.getMonth(), anoAtual=now.getFullYear();
   const mesNome=MESES_FULL[mesAtual];
 
-  // Total alunos
-  document.getElementById('dash-total-alunos').textContent=alunos.length;
-  document.getElementById('dash-alunos-sub').textContent=alunos.length+' cadastrado'+(alunos.length!==1?'s':'');
+  // Row 1 — Alunos ativos
+  const alunosAtivos=alunos.filter(a=>a.ativo!==false);
+  document.getElementById('dash-alunos-ativos').textContent=alunosAtivos.length;
+  document.getElementById('dash-alunos-ativos-sub').textContent=alunosAtivos.length+' ativo'+(alunosAtivos.length!==1?'s':'');
 
-  // Receita do mês (do fluxo)
-  let receitaMes=0, despesaMes=0;
-  fluxo.forEach(f=>{
-    if(!f.dataRaw)return;
-    const d=new Date(f.dataRaw+'T00:00:00');
-    if(d.getMonth()!==mesAtual||d.getFullYear()!==anoAtual)return;
-    const v=parseFloat((f.valor||'0').replace(/[^0-9.,]/g,'').replace(',','.'))||0;
-    if(f.tipo==='income')receitaMes+=v; else despesaMes+=v;
+  // Row 1 — Alunos pagos no mês (pagamentos com status=pago e venc no mês atual)
+  const pagosMes=pagamentos.filter(p=>{
+    if(p.status!=='pago')return false;
+    const vm=parseVencMes(p.venc);
+    return vm&&vm.mes===mesAtual;
   });
-  document.getElementById('dash-receita-val').textContent='R$ '+receitaMes.toLocaleString('pt-BR');
-  document.getElementById('dash-receita-sub').textContent=mesNome+' '+anoAtual;
+  document.getElementById('dash-alunos-pagos').textContent=pagosMes.length;
+  document.getElementById('dash-alunos-pagos-sub').textContent=mesNome+' '+anoAtual;
 
-  // Pgtos pendentes
-  const pend=pagamentos.filter(p=>p.status!=='pago');
-  document.getElementById('dash-pend-count').textContent=pend.length;
-  const totalPend=pend.reduce((s,p)=>s+parseInt((p.valor||'0').replace(/[^0-9]/g,'')),0);
-  document.getElementById('dash-pend-val').textContent='R$ '+totalPend.toLocaleString('pt-BR')+' em aberto';
-
-  // Professores ativos
+  // Row 1 — Professores ativos
   const profAtivos=professores.filter(p=>p.status==='Ativo'||p.status==='Ativa').length;
   document.getElementById('dash-prof-count').textContent=profAtivos;
   document.getElementById('dash-prof-sub').textContent=professores.length+' professor'+(professores.length!==1?'es':'');
 
+  // Row 2 — Receita prevista (todos pagamentos do mês, pagos ou não)
+  const prevMes=pagamentos.filter(p=>{
+    const vm=parseVencMes(p.venc);
+    return vm&&vm.mes===mesAtual;
+  });
+  const recPrevista=prevMes.reduce((s,p)=>s+parseValorNum(p.valor),0);
+  document.getElementById('dash-receita-prevista').textContent='R$ '+recPrevista.toLocaleString('pt-BR');
+  document.getElementById('dash-receita-prevista-sub').textContent=mesNome+' '+anoAtual;
+
+  // Row 2 — Receita realizada (pagos no mês)
+  const recRealizada=pagosMes.reduce((s,p)=>s+parseValorNum(p.valor),0);
+  document.getElementById('dash-receita-realizada').textContent='R$ '+recRealizada.toLocaleString('pt-BR');
+  document.getElementById('dash-receita-realizada-sub').textContent=pagosMes.length+' pagamento'+(pagosMes.length!==1?'s':'');
+
+  // Row 2 — Pagamentos pendentes (todos pendentes/atrasados)
+  const pendentes=pagamentos.filter(p=>p.status!=='pago');
+  const totalPend=pendentes.reduce((s,p)=>s+parseValorNum(p.valor),0);
+  document.getElementById('dash-pend-count').textContent=pendentes.length;
+  document.getElementById('dash-pend-val').textContent='R$ '+totalPend.toLocaleString('pt-BR')+' em aberto';
+
   // Alertas de pagamento
   renderDashAlerts();
-
+  // Alunos vencidos
+  renderDashVencidos();
   // Alunos por professor
   renderDashProfBarras();
-
-  // Gráfico de distribuição por plano
+  // Gráficos
+  updateDashChart();
   updatePlanChart();
 }
 
@@ -760,6 +802,54 @@ function renderDashProfBarras(){
   }).join('');
 }
 
+function renderDashVencidos(){
+  const el=document.getElementById('dash-vencidos');
+  if(!el)return;
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const vencidos=pagamentos.filter(p=>{
+    if(p.status==='pago')return false;
+    const vm=parseVencMes(p.venc);
+    if(!vm)return false;
+    const dt=new Date(hoje.getFullYear(),vm.mes,vm.dia);
+    if(dt>hoje&&(dt-hoje)>180*864e5)dt.setFullYear(dt.getFullYear()-1);
+    return dt<hoje;
+  });
+  if(vencidos.length===0){el.innerHTML='<div style="padding:10px 0;font-size:13px;color:var(--text-secondary);">Nenhum aluno vencido</div>';return;}
+  el.innerHTML=vencidos.map(p=>{
+    const vm=parseVencMes(p.venc);
+    const dt=new Date(hoje.getFullYear(),vm.mes,vm.dia);
+    if(dt>hoje&&(dt-hoje)>180*864e5)dt.setFullYear(dt.getFullYear()-1);
+    const dias=Math.round((hoje-dt)/864e5);
+    return `<div class="fe"><span>${p.aluno} — ${p.plano} · <strong>${dias} dia${dias!==1?'s':''} em atraso</strong></span><span class="badge br">Vencido</span></div>`;
+  }).join('');
+}
+
+let dashChart=null;
+function updateDashChart(){
+  if(!dashChart)return;
+  const now=new Date();
+  const labels=[],recData=[],despData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const m=d.getMonth(),y=d.getFullYear();
+    labels.push(MES[m]);
+    let rec=0,desp=0;
+    fluxo.forEach(f=>{
+      if(!f.dataRaw)return;
+      const fd=new Date(f.dataRaw+'T00:00:00');
+      if(fd.getMonth()!==m||fd.getFullYear()!==y)return;
+      const v=parseValorNum(f.valor);
+      if(f.tipo==='income')rec+=v; else desp+=v;
+    });
+    recData.push(rec);
+    despData.push(desp);
+  }
+  dashChart.data.labels=labels;
+  dashChart.data.datasets[0].data=recData;
+  dashChart.data.datasets[1].data=despData;
+  dashChart.update();
+}
+
 let planChart=null;
 function updatePlanChart(){
   const canvas=document.getElementById('chart-planos');
@@ -780,10 +870,12 @@ function syncPagAluno(){
 function renderAlunos(lista){
   document.getElementById('alunos-body').innerHTML=lista.map(a=>{
     const i=alunos.indexOf(a);
+    const ativo=a.ativo!==false;
     return `<tr>
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
       <td>${a.plano}</td><td>${a.prof}</td><td>${a.venc}</td>
       <td><span class="badge ${a.status==='pago'?'bg':a.status==='pendente'?'ba':'br'}">${a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado'}</span></td>
+      <td><span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span></td>
       <td><button class="btn bb" style="font-size:11px;padding:4px 8px;" onclick="showHistorico(${i})">Ver histórico</button></td>
       <td style="white-space:nowrap;">
         <button class="btn" style="font-size:11px;padding:4px 8px;" onclick="editarAluno(${i})">Editar</button>
@@ -794,7 +886,23 @@ function renderAlunos(lista){
   syncPagAluno();
 }
 
-function filterAlunos(q){renderAlunos(alunos.filter(a=>a.nome.toLowerCase().includes(q.toLowerCase())));}
+let currentAlunoFilter='todos';
+function filterAlunoStatus(f,btn){
+  currentAlunoFilter=f;
+  document.querySelectorAll('#alunos-filtros .tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const q=document.getElementById('busca-aluno').value.toLowerCase();
+  let lista=alunos.filter(a=>a.nome.toLowerCase().includes(q));
+  if(f==='ativos')lista=lista.filter(a=>a.ativo!==false);
+  if(f==='inativos')lista=lista.filter(a=>a.ativo===false);
+  renderAlunos(lista);
+}
+function filterAlunos(q){
+  let lista=alunos.filter(a=>a.nome.toLowerCase().includes(q.toLowerCase()));
+  if(currentAlunoFilter==='ativos')lista=lista.filter(a=>a.ativo!==false);
+  if(currentAlunoFilter==='inativos')lista=lista.filter(a=>a.ativo===false);
+  renderAlunos(lista);
+}
 
 function showHistorico(idx){
   const a=alunos[idx];
@@ -851,7 +959,7 @@ function marcarPago(idx){
 
 function filterPag(f,btn){
   currentPagFilter=f;
-  document.querySelectorAll('.tab-btn').forEach(b=>{
+  document.querySelectorAll('#page-pagamentos .tab-btn').forEach(b=>{
     b.classList.toggle('active', btn ? b===btn : b.textContent.trim().toLowerCase()===({todos:'todos',pago:'pagos',pendente:'pendentes',atrasado:'atrasados'}[f]||f));
   });
   renderPagamentos(f==='todos'?pagamentos:pagamentos.filter(p=>p.status===f));
@@ -866,7 +974,7 @@ function renderFluxo(){
     if(!f.dataRaw)return;
     const d=new Date(f.dataRaw+'T00:00:00');
     if(d.getMonth()!==mesAtual||d.getFullYear()!==anoAtual)return;
-    const v=parseFloat((f.valor||'0').replace(/[^0-9.,]/g,'').replace(',','.'))||0;
+    const v=parseValorNum(f.valor);
     if(f.tipo==='income')rec+=v; else desp+=v;
   });
   const saldo=rec-desp;
@@ -971,6 +1079,7 @@ function addAluno(){
   const planoRaw=document.getElementById('in-plano').value;
   const prof=document.getElementById('in-prof').value;
   const inicio=document.getElementById('in-inicio').value;
+  const ativo=document.getElementById('in-ativo').value!=='false';
   if(!nome){alert('Informe o nome do aluno.');return;}
   const plano=planoRaw; // value attribute já é a duração (ex: "Mensal")
   const cor=avCores[alunos.length%4];
@@ -983,7 +1092,7 @@ function addAluno(){
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   }
   const valor=getPlanoPreco(plano);
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,hist:[]});
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,hist:[]});
   pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
@@ -1009,6 +1118,7 @@ function editarAluno(idx){
   document.getElementById('ed-bairro').value=a.bairro||'';
   document.getElementById('ed-plano').value=a.plano;
   document.getElementById('ed-prof').value=a.prof;
+  document.getElementById('ed-ativo').value=a.ativo!==false?'true':'false';
   openModal('modal-editar-aluno');
 }
 
@@ -1031,6 +1141,7 @@ function saveEditAluno(){
   a.bairro=document.getElementById('ed-bairro').value.trim();
   a.plano=document.getElementById('ed-plano').value;
   a.prof=document.getElementById('ed-prof').value;
+  a.ativo=document.getElementById('ed-ativo').value!=='false';
   const partes=nome.split(' ');
   a.ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
   if(oldNome!==nome){
@@ -1235,7 +1346,7 @@ function editarPagamento(idx){
   document.getElementById('ep-idx').value=idx;
   document.getElementById('ep-aluno').value=p.aluno;
   document.getElementById('ep-plano').value=p.plano;
-  const rawVal=parseFloat((p.valor||'0').replace(/[^0-9.,]/g,'').replace(',','.'))||0;
+  const rawVal=parseValorNum(p.valor);
   document.getElementById('ep-valor').value=rawVal;
   document.getElementById('ep-venc').value=p.vencRaw||'';
   document.getElementById('ep-forma').value=p.forma||'—';
@@ -1375,8 +1486,8 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   if(saved){await startSession(saved);}
   // Enter key shortcut for login form
   document.getElementById('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  // Dashboard charts (always built, data irrelevant until login)
-  new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:['Dez','Jan','Fev','Mar','Abr','Mai'],datasets:[{label:'Receita',data:[11200,10200,11800,12500,13100,14200],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[7200,7000,7400,7600,7700,7800],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
+  // Dashboard charts (always built, data loaded after login)
+  dashChart=new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:[],datasets:[{label:'Receita',data:[],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
   planChart=new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:['#378ADD','#7F77DD','#1D9E75','#F5A623','#E24B4A'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 });
 </script>
