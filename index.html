@@ -941,10 +941,8 @@ function showAlunoDetalhe(idx){
   avEl.textContent=a.ini;
   document.getElementById('det-nome').textContent=a.nome;
   const statusLabel=a.status==='pago'?'Pago':a.status==='pendente'?'Pendente':'Atrasado';
-  const statusCls=a.status==='pago'?'bg':a.status==='pendente'?'ba':'br';
   const ativo=a.ativo!==false;
   document.getElementById('det-badges').innerHTML=
-    `<span class="badge ${statusCls}">${statusLabel}</span>`+
     `<span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>`;
   const valorAluno=getPlanoPreco(a.plano);
   document.getElementById('det-plano').textContent=a.plano||'—';
