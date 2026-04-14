@@ -179,6 +179,14 @@
     .overlay.open { align-items: flex-end; }
     .modal { width: 100%; max-width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 20px 16px 28px; }
   }
+  @media print {
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 48px 52px; color: #1a1a18; }
+    #print-area h1 { font-size: 20px; margin: 0 0 4px; }
+    #print-area .print-sub { font-size: 12px; color: #888; margin-bottom: 32px; }
+    #print-area .print-body { font-size: 14px; line-height: 1.85; white-space: pre-wrap; }
+    #print-area .print-footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid #ddd; font-size: 11px; color: #aaa; }
+  }
 </style>
 </head>
 <body>
@@ -453,6 +461,7 @@
               <div style="display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;" id="det-badges"></div>
             </div>
             <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;margin-top:4px;">
+              <button class="btn" style="font-size:13px;" onclick="openMatriculaModal(currentAlunoIdx)">Texto de matrícula</button>
               <button class="btn btn-p" style="font-size:13px;" onclick="editarAluno(currentAlunoIdx)">Editar</button>
               <button class="btn btn-d" style="font-size:13px;" onclick="excluirAluno(currentAlunoIdx)">Excluir</button>
             </div>
@@ -626,13 +635,42 @@
           </div>
           <div id="logo-feedback" class="hidden feedback" style="margin-top:12px;background:var(--bg-success);color:var(--text-success);"></div>
         </div>
+        <div class="card" style="max-width:460px;margin-top:20px;">
+          <div class="sec-title" style="margin-bottom:6px;">Mensagem de matrícula</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Use <strong>{{nome}}</strong> para o nome do aluno e <strong>{{dia}}</strong> para o dia de vencimento. O texto pode ser personalizado na ficha de cada aluno antes de exportar.</div>
+          <textarea id="matricula-template-input" class="fi" style="height:300px;resize:vertical;font-size:13px;line-height:1.75;font-family:var(--font);"></textarea>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn btn-p" onclick="saveMatriculaTemplate()">Salvar template</button>
+            <button class="btn" onclick="resetMatriculaTemplate()">Restaurar padrão</button>
+          </div>
+          <div id="template-feedback" class="hidden feedback" style="margin-top:10px;background:var(--bg-success);color:var(--text-success);"></div>
+        </div>
       </div>
 
     </div>
   </div>
 </div>
 
+<!-- ÁREA DE IMPRESSÃO (oculta, usada pelo window.print) -->
+<div id="print-area" style="display:none;">
+  <div id="print-logo" style="margin-bottom:28px;"></div>
+  <div class="print-body" id="print-content"></div>
+  <div class="print-footer" id="print-footer"></div>
+</div>
+
 <!-- MODAIS -->
+<div class="overlay" id="modal-matricula">
+  <div class="modal" style="width:560px;">
+    <div class="modal-title" id="modal-matricula-title">Texto de matrícula</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Edite o texto abaixo antes de exportar. As alterações aqui não afetam o template padrão.</div>
+    <textarea id="modal-matricula-text" class="fi" style="height:340px;resize:vertical;font-size:13px;line-height:1.75;font-family:var(--font);"></textarea>
+    <div class="ma" style="margin-top:16px;">
+      <button class="btn" onclick="closeModal('modal-matricula')">Fechar</button>
+      <button class="btn btn-p" onclick="exportMatriculaPDF()">Exportar PDF</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="modal-novo-usuario">
   <div class="modal">
     <div class="modal-title">Criar novo usuário</div>
@@ -834,7 +872,8 @@ const db=firebase.firestore();
 const auth=firebase.auth();
 // ─────────────────────────────────────────────────────────────────────────────
 
-let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null, studioLogo=null;
+const DEFAULT_MATRICULA_TEMPLATE=`Bem-vindo(a) ao estúdio, {{nome}}!\n\nÉ com muita alegria que recebemos você em nossa equipe. Aqui você encontrará um espaço acolhedor e profissional, dedicado ao seu bem-estar através do Método Pilates.\n\nORIENTAÇÕES:\n\n• Pontualidade: Chegue com 5 minutos de antecedência. Atrasos poderão encurtar o tempo da sua aula.\n\n• Vestimenta: Use roupas confortáveis e meia antiderrapante — obrigatória nas aulas de aparelho.\n\n• Cancelamentos: Cancele com no mínimo 12 horas de antecedência para que a aula não seja descontada.\n\n• Saúde: Informe sempre ao instrutor sobre dores, lesões, cirurgias recentes ou qualquer condição de saúde.\n\n• Mensalidade: O vencimento da sua mensalidade é todo dia {{dia}} de cada mês. Em caso de dúvidas sobre pagamentos, fale conosco.\n\n• Ambiente: Mantenha o celular no silencioso durante as aulas e preserve o bem-estar dos demais alunos.\n\nEstamos aqui para cuidar de você. Qualquer dúvida, estamos à disposição!\n\nCom carinho,\nEquipe Flex Flow`;
+let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null, studioLogo=null, matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE;
 
 function save(){
   if(!currentUid)return;
@@ -848,7 +887,7 @@ function save(){
   else localStorage.removeItem('ff_logo_'+currentUid);
   // Sync to Firebase (fire-and-forget)
   db.collection('users').doc(currentUid)
-    .set({alunos,pagamentos,fluxo,professores,planos,studioLogo:studioLogo||null})
+    .set({alunos,pagamentos,fluxo,professores,planos,studioLogo:studioLogo||null,matriculaTemplate})
     .catch(e=>console.warn('Firebase sync error:',e));
 }
 
@@ -921,6 +960,7 @@ async function startSession(email,uid){
       professores=d.professores||defaultProfessores;
       planos=d.planos||defaultPlanos;
       studioLogo=d.studioLogo||null;
+      matriculaTemplate=d.matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
     } else {
       // Migration: try old email-local-part-keyed doc (legacy)
       const oldDoc=await db.collection('users').doc(email.split('@')[0]).get();
@@ -932,6 +972,7 @@ async function startSession(email,uid){
         professores=d.professores||defaultProfessores;
         planos=d.planos||defaultPlanos;
         studioLogo=d.studioLogo||null;
+        matriculaTemplate=d.matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
       } else {
         // Fall back to localStorage
         alunos=JSON.parse(localStorage.getItem('ff_alunos_'+uid)||'null')||defaultAlunos;
@@ -940,6 +981,7 @@ async function startSession(email,uid){
         professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||'null')||defaultProfessores;
         planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
         studioLogo=localStorage.getItem('ff_logo_'+uid)||null;
+        matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE;
       }
       save(); // upload to uid-keyed doc
     }
@@ -1059,6 +1101,53 @@ function removeLogo(){
   applyLogo(null);
   save();
   document.getElementById('logo-file-input').value='';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── MATRÍCULA ────────────────────────────────────────────────────────────────
+function getMatriculaTexto(aluno){
+  const nome=aluno.nome||'';
+  const dia=aluno.diaVencimento||(aluno.venc&&aluno.venc!=='—'?aluno.venc.split('/')[0]:'1');
+  return (matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE)
+    .replace(/\{\{nome\}\}/g,nome)
+    .replace(/\{\{dia\}\}/g,dia);
+}
+function openMatriculaModal(idx){
+  const a=alunos[idx];
+  document.getElementById('modal-matricula-title').textContent='Texto de matrícula — '+a.nome;
+  document.getElementById('modal-matricula-text').value=getMatriculaTexto(a);
+  openModal('modal-matricula');
+}
+function saveMatriculaTemplate(){
+  matriculaTemplate=document.getElementById('matricula-template-input').value;
+  save();
+  const fb=document.getElementById('template-feedback');
+  fb.textContent='Template salvo com sucesso!';
+  fb.classList.remove('hidden');
+  setTimeout(()=>fb.classList.add('hidden'),2000);
+}
+function resetMatriculaTemplate(){
+  matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE;
+  document.getElementById('matricula-template-input').value=DEFAULT_MATRICULA_TEMPLATE;
+  save();
+}
+function exportMatriculaPDF(){
+  const text=document.getElementById('modal-matricula-text').value;
+  const title=document.getElementById('modal-matricula-title').textContent;
+  const alunoNome=title.replace('Texto de matrícula — ','');
+  // Logo
+  const logoEl=document.getElementById('print-logo');
+  if(studioLogo){
+    logoEl.innerHTML=`<img src="${studioLogo}" style="height:68px;object-fit:contain;border-radius:10px;display:block;margin-bottom:16px;">`;
+  } else {
+    logoEl.innerHTML=`<div style="font-size:22px;font-weight:700;margin-bottom:4px;">Flex Flow</div><div style="font-size:12px;color:#888;margin-bottom:16px;">Gestão do estúdio</div>`;
+  }
+  document.getElementById('print-content').textContent=text;
+  document.getElementById('print-footer').textContent='Documento gerado para '+alunoNome+' · '+new Date().toLocaleDateString('pt-BR');
+  const printArea=document.getElementById('print-area');
+  printArea.style.display='block';
+  window.print();
+  printArea.style.display='none';
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1542,6 +1631,7 @@ function showPage(p){
   if(p==='pagamentos')filterPag(currentPagFilter);
   if(p==='fluxo')renderFluxo();
   if(p==='notificacoes')renderNotificacoes();
+  if(p==='configuracoes')document.getElementById('matricula-template-input').value=matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
