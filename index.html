@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flex Flow — Gestão do Estúdio</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
@@ -160,6 +161,17 @@
     #tbl-pagamentos th:nth-child(2), #tbl-pagamentos td:nth-child(2),
     #tbl-pagamentos th:nth-child(4), #tbl-pagamentos td:nth-child(4),
     #tbl-pagamentos th:nth-child(6), #tbl-pagamentos td:nth-child(6) { display: none; }
+    /* Dashboard: 3 columns even on mobile */
+    #page-dashboard .g3 { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #page-dashboard .g3 .mc { padding: 9px 8px; }
+    #page-dashboard .g3 .mc-val { font-size: 15px; }
+    #page-dashboard .g3 .mc-label { font-size: 10px; }
+    #page-dashboard .g3 .mc-sub { font-size: 10px; }
+    /* General mobile improvements */
+    .mc-val { font-size: 18px; }
+    .page-title { font-size: 15px; }
+    .tab-btn { padding: 5px 10px; font-size: 11px; }
+    .sec-title { font-size: 13px; }
     /* Modal as bottom sheet */
     .overlay.open { align-items: flex-end; }
     .modal { width: 100%; max-width: 100%; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 20px 16px 28px; }
@@ -221,7 +233,7 @@
     <div class="topbar">
       <span class="page-title" id="topbar-title">Dashboard</span>
       <div class="topbar-actions">
-        <button class="btn btn-w" onclick="showPage('notificacoes')" style="font-size:12px;">3 alertas</button>
+        <button class="btn btn-w" onclick="showPage('notificacoes')" style="font-size:12px;" id="topbar-alertas-btn">0 alertas</button>
         <button class="btn btn-p" onclick="showPage('exportar')">Exportar dados</button>
         <span id="user-badge" style="font-size:12px;color:var(--text-secondary);border-left:0.5px solid var(--border);padding-left:12px;margin-left:4px;"></span>
         <button class="btn btn-d" onclick="logout()" style="font-size:12px;">Sair</button>
@@ -273,9 +285,12 @@
 
       <!-- ALUNOS -->
       <div id="page-alunos" class="hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;">
-          <input class="si" id="busca-aluno" placeholder="Buscar aluno..." oninput="filterAlunos(this.value)" style="width:220px;">
-          <button class="btn btn-p" onclick="openModal('modal-aluno')">+ Novo aluno</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:12px;flex-wrap:wrap;">
+          <input class="si" id="busca-aluno" placeholder="Buscar aluno..." oninput="filterAlunos(this.value)" style="width:200px;min-width:130px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn" onclick="openModal('modal-importar-alunos')">&#8593; Importar</button>
+            <button class="btn btn-p" onclick="openModal('modal-aluno')">+ Novo aluno</button>
+          </div>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:14px;" id="alunos-filtros">
           <button class="tab-btn active" onclick="filterAlunoStatus('todos',this)">Todos</button>
@@ -308,7 +323,17 @@
 
       <!-- PAGAMENTOS -->
       <div id="page-pagamentos" class="hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn" onclick="navPagMes(-1)" style="padding:6px 10px;">&#8592;</button>
+          <span style="font-size:14px;font-weight:600;min-width:140px;text-align:center;" id="pag-mes-label">—</span>
+          <button class="btn" onclick="navPagMes(1)" style="padding:6px 10px;">&#8594;</button>
+        </div>
+        <div class="g3" style="margin-bottom:14px;">
+          <div class="mc"><div class="mc-label">Previsto no mês</div><div class="mc-val" id="pag-sum-previsto">—</div></div>
+          <div class="mc"><div class="mc-label">Pago no mês</div><div class="mc-val green" id="pag-sum-pago">—</div></div>
+          <div class="mc"><div class="mc-label">Pendente/Atrasado</div><div class="mc-val amber" id="pag-sum-pendente">—</div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
           <div class="tab-btns">
             <button class="tab-btn active" onclick="filterPag('todos',this)">Todos</button>
             <button class="tab-btn" onclick="filterPag('pago',this)">Pagos</button>
@@ -327,6 +352,11 @@
 
       <!-- FLUXO DE CAIXA -->
       <div id="page-fluxo" class="hidden">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn" onclick="navFluxoMes(-1)" style="padding:6px 10px;">&#8592;</button>
+          <span style="font-size:14px;font-weight:600;min-width:140px;text-align:center;" id="fluxo-mes-label">—</span>
+          <button class="btn" onclick="navFluxoMes(1)" style="padding:6px 10px;">&#8594;</button>
+        </div>
         <div class="g3">
           <div class="mc"><div class="mc-label" id="fluxo-label-rec">Receitas</div><div class="mc-val green" id="fluxo-receita">—</div></div>
           <div class="mc"><div class="mc-label" id="fluxo-label-desp">Despesas</div><div class="mc-val red" id="fluxo-despesa">—</div></div>
@@ -343,23 +373,29 @@
 
       <!-- RELATÓRIOS -->
       <div id="page-relatorios" class="hidden">
+        <div class="g4">
+          <div class="mc"><div class="mc-label" id="rel-label-rec">Receita acumulada</div><div class="mc-val green" id="rel-receita-acum">—</div><div class="mc-sub" id="rel-receita-acum-sub"></div></div>
+          <div class="mc"><div class="mc-label" id="rel-label-desp">Despesas acumuladas</div><div class="mc-val red" id="rel-despesas-acum">—</div></div>
+          <div class="mc"><div class="mc-label">Ticket médio</div><div class="mc-val" id="rel-ticket-medio">—</div><div class="mc-sub">por aluno ativo</div></div>
+          <div class="mc"><div class="mc-label">Adimplência</div><div class="mc-val" id="rel-adimplencia">—</div><div class="mc-sub" id="rel-adimplencia-sub"></div></div>
+        </div>
         <div class="g3">
-          <div class="mc"><div class="mc-label">Receita acumulada (2025)</div><div class="mc-val green">R$ 68.400</div><div class="mc-sub green">+12% vs 2024</div></div>
-          <div class="mc"><div class="mc-label">Ticket médio mensal</div><div class="mc-val">R$ 374</div><div class="mc-sub">por aluno</div></div>
-          <div class="mc"><div class="mc-label">Taxa de retenção</div><div class="mc-val">87%</div><div class="mc-sub green">Acima da meta</div></div>
+          <div class="mc"><div class="mc-label">Alunos ativos</div><div class="mc-val" id="rel-alunos-ativos">—</div><div class="mc-sub" id="rel-alunos-ativos-sub"></div></div>
+          <div class="mc"><div class="mc-label">Saldo do ano</div><div class="mc-val" id="rel-saldo-ano">—</div><div class="mc-sub" id="rel-saldo-ano-sub"></div></div>
+          <div class="mc"><div class="mc-label">Alunos inativos</div><div class="mc-val red" id="rel-alunos-inativos">—</div></div>
         </div>
         <div class="g2">
           <div class="card">
-            <div class="sec-title">Evolução de receita (2025)</div>
+            <div class="sec-title">Evolução de receita — últimos 6 meses</div>
             <div style="position:relative;width:100%;height:200px;"><canvas id="chart-receita"></canvas></div>
           </div>
           <div class="card">
-            <div class="sec-title">Alunos ativos por mês (2025)</div>
+            <div class="sec-title">Receita vs Despesa — últimos 6 meses</div>
             <div style="position:relative;width:100%;height:200px;"><canvas id="chart-alunos-mes"></canvas></div>
           </div>
         </div>
         <div class="card">
-          <div class="sec-title">Receita por professor (maio 2025)</div>
+          <div class="sec-title">Alunos ativos por professor</div>
           <div style="position:relative;width:100%;height:160px;"><canvas id="chart-prof"></canvas></div>
         </div>
       </div>
@@ -643,6 +679,22 @@
   </div>
 </div>
 
+<div class="overlay" id="modal-importar-alunos">
+  <div class="modal">
+    <div class="modal-title">Importar alunos por planilha</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">Faça upload de uma planilha Excel (.xlsx) ou CSV.<br>Use o modelo abaixo para garantir o formato correto.</div>
+    <div style="margin-bottom:16px;"><button class="btn btn-s" onclick="downloadTemplate()">&#8595; Baixar planilha modelo</button></div>
+    <div class="fg"><label class="fl">Selecionar arquivo (.xlsx ou .csv)</label><input type="file" id="import-file" class="fi" accept=".xlsx,.xls,.csv" onchange="processarArquivoImport(this)" style="cursor:pointer;"></div>
+    <div id="import-preview" style="display:none;margin-top:12px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;" id="import-preview-title"></div>
+      <div style="max-height:180px;overflow-y:auto;font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius-md);padding:10px;" id="import-preview-list"></div>
+      <div style="font-size:12px;color:var(--text-danger);margin-top:6px;" id="import-erros"></div>
+    </div>
+    <div id="import-feedback" class="feedback hidden" style="background:var(--bg-success);color:var(--text-success);margin-top:10px;"></div>
+    <div class="ma"><button class="btn" onclick="closeModal('modal-importar-alunos')">Cancelar</button><button class="btn btn-p" id="btn-confirmar-import" style="display:none;" onclick="confirmarImportacao()">Importar alunos</button></div>
+  </div>
+</div>
+
 <script>
 const defaultAlunos=[
   {nome:'Ana Lima',ini:'AL',cor:'av-b',plano:'Mensal',prof:'Mariana Silva',venc:'10/06',status:'pago',hist:[{mes:'Jan',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Fev',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mar',val:'R$ 350',forma:'Cartão',st:'pago'},{mes:'Abr',val:'R$ 350',forma:'PIX',st:'pago'},{mes:'Mai',val:'R$ 350',forma:'PIX',st:'pago'}]},
@@ -663,15 +715,15 @@ const defaultPagamentos=[
   {aluno:'Juliana Castro',plano:'Trimestral',valor:'R$ 900',venc:'13/06',status:'pendente',forma:'—'},
 ];
 const defaultFluxo=[
-  {desc:'Mensalidades — Ana Lima, Beatriz, Ricardo',tipo:'income',valor:'+R$ 1.050',data:'02/05'},
-  {desc:'Mensalidade — Fernanda Costa (semestral)',tipo:'income',valor:'+R$ 1.800',data:'01/05'},
-  {desc:'Aluguel do estúdio',tipo:'expense',valor:'-R$ 3.200',data:'05/05'},
-  {desc:'Salários dos professores',tipo:'expense',valor:'-R$ 4.000',data:'05/05'},
-  {desc:'Mensalidade — Carlos Souza',tipo:'income',valor:'+R$ 900',data:'08/05'},
-  {desc:'Equipamentos — bolas e faixas',tipo:'expense',valor:'-R$ 350',data:'10/05'},
-  {desc:'Mensalidades em lote — 8 alunos',tipo:'income',valor:'+R$ 2.800',data:'12/05'},
-  {desc:'Energia elétrica',tipo:'expense',valor:'-R$ 250',data:'15/05'},
-  {desc:'Mensalidades em lote — 7 alunos',tipo:'income',valor:'+R$ 7.650',data:'18/05'},
+  {desc:'Mensalidades — Ana Lima, Beatriz, Ricardo',tipo:'income',valor:'+R$ 1.050',data:'02/05',dataRaw:'2025-05-02'},
+  {desc:'Mensalidade — Fernanda Costa (semestral)',tipo:'income',valor:'+R$ 1.800',data:'01/05',dataRaw:'2025-05-01'},
+  {desc:'Aluguel do estúdio',tipo:'expense',valor:'-R$ 3.200',data:'05/05',dataRaw:'2025-05-05'},
+  {desc:'Salários dos professores',tipo:'expense',valor:'-R$ 4.000',data:'05/05',dataRaw:'2025-05-05'},
+  {desc:'Mensalidade — Carlos Souza',tipo:'income',valor:'+R$ 900',data:'08/05',dataRaw:'2025-05-08'},
+  {desc:'Equipamentos — bolas e faixas',tipo:'expense',valor:'-R$ 350',data:'10/05',dataRaw:'2025-05-10'},
+  {desc:'Mensalidades em lote — 8 alunos',tipo:'income',valor:'+R$ 2.800',data:'12/05',dataRaw:'2025-05-12'},
+  {desc:'Energia elétrica',tipo:'expense',valor:'-R$ 250',data:'15/05',dataRaw:'2025-05-15'},
+  {desc:'Mensalidades em lote — 7 alunos',tipo:'income',valor:'+R$ 7.650',data:'18/05',dataRaw:'2025-05-18'},
 ];
 
 const defaultProfessores=[
@@ -1068,6 +1120,23 @@ function showHistorico(idx){
 }
 
 let currentPagFilter='todos';
+const _now0=new Date();
+let currentPagAno=_now0.getFullYear(), currentPagMes=_now0.getMonth();
+let currentFluxoAno=_now0.getFullYear(), currentFluxoMes=_now0.getMonth();
+
+function navPagMes(dir){
+  currentPagMes+=dir;
+  if(currentPagMes>11){currentPagMes=0;currentPagAno++;}
+  else if(currentPagMes<0){currentPagMes=11;currentPagAno--;}
+  filterPag(currentPagFilter);
+}
+
+function navFluxoMes(dir){
+  currentFluxoMes+=dir;
+  if(currentFluxoMes>11){currentFluxoMes=0;currentFluxoAno++;}
+  else if(currentFluxoMes<0){currentFluxoMes=11;currentFluxoAno--;}
+  renderFluxo();
+}
 
 function renderPagamentos(lista){
   document.getElementById('pagamentos-body').innerHTML=lista.map(p=>{
@@ -1090,11 +1159,15 @@ function marcarPago(idx){
   pagamentos[idx].forma='PIX';
   const nomeAluno=pagamentos[idx].aluno;
   const a=alunos.find(x=>x.nome===nomeAluno);
+  const hoje=new Date();
   if(a){
     a.status='pago';
-    const hoje=new Date();
     a.hist.push({mes:MES[hoje.getMonth()],val:pagamentos[idx].valor,forma:'PIX',st:'pago'});
   }
+  const dataRaw=hoje.toISOString().split('T')[0];
+  const dataFmt=hoje.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  const valorNum=parseValorNum(pagamentos[idx].valor);
+  fluxo.unshift({desc:'Mensalidade — '+nomeAluno,tipo:'income',valor:'+R$ '+valorNum.toLocaleString('pt-BR'),data:dataFmt,dataRaw});
   save();
   filterPag(currentPagFilter);
   renderAlunos(alunos);
@@ -1107,23 +1180,43 @@ function filterPag(f,btn){
   document.querySelectorAll('#page-pagamentos .tab-btn').forEach(b=>{
     b.classList.toggle('active', btn ? b===btn : b.textContent.trim().toLowerCase()===({todos:'todos',pago:'pagos',pendente:'pendentes',atrasado:'atrasados'}[f]||f));
   });
-  renderPagamentos(f==='todos'?pagamentos:pagamentos.filter(p=>p.status===f));
+  const mesLabelEl=document.getElementById('pag-mes-label');
+  if(mesLabelEl)mesLabelEl.textContent=MESES_FULL[currentPagMes]+' '+currentPagAno;
+  const doMes=pagamentos.filter(p=>{
+    if(!p.venc||p.venc==='—')return false;
+    const parts=p.venc.split('/');
+    if(parts.length<2)return false;
+    return parseInt(parts[1])-1===currentPagMes;
+  });
+  const previsto=doMes.reduce((s,p)=>s+parseValorNum(p.valor),0);
+  const pago=doMes.filter(p=>p.status==='pago').reduce((s,p)=>s+parseValorNum(p.valor),0);
+  const pendente=doMes.filter(p=>p.status!=='pago').reduce((s,p)=>s+parseValorNum(p.valor),0);
+  const sumPrevEl=document.getElementById('pag-sum-previsto');
+  const sumPagoEl=document.getElementById('pag-sum-pago');
+  const sumPendEl=document.getElementById('pag-sum-pendente');
+  if(sumPrevEl)sumPrevEl.textContent='R$ '+previsto.toLocaleString('pt-BR');
+  if(sumPagoEl)sumPagoEl.textContent='R$ '+pago.toLocaleString('pt-BR');
+  if(sumPendEl)sumPendEl.textContent='R$ '+pendente.toLocaleString('pt-BR');
+  const lista=f==='todos'?doMes:doMes.filter(p=>p.status===f);
+  renderPagamentos(lista);
 }
 
 function renderFluxo(){
-  // Calcular métricas do mês atual
-  const now=new Date();
-  const mesAtual=now.getMonth(), anoAtual=now.getFullYear();
-  let rec=0,desp=0;
-  fluxo.forEach(f=>{
-    if(!f.dataRaw)return;
+  const mesAtual=currentFluxoMes, anoAtual=currentFluxoAno;
+  const mesNome=MESES_FULL[mesAtual];
+  const listaFiltrada=fluxo.filter(f=>{
+    if(!f.dataRaw)return false;
     const d=new Date(f.dataRaw+'T00:00:00');
-    if(d.getMonth()!==mesAtual||d.getFullYear()!==anoAtual)return;
+    return d.getMonth()===mesAtual&&d.getFullYear()===anoAtual;
+  });
+  let rec=0,desp=0;
+  listaFiltrada.forEach(f=>{
     const v=parseValorNum(f.valor);
     if(f.tipo==='income')rec+=v; else desp+=v;
   });
   const saldo=rec-desp;
-  const mesNome=MESES_FULL[mesAtual];
+  const mesLabelEl=document.getElementById('fluxo-mes-label');
+  if(mesLabelEl)mesLabelEl.textContent=mesNome+' '+anoAtual;
   document.getElementById('fluxo-label-rec').textContent='Receitas ('+mesNome+')';
   document.getElementById('fluxo-label-desp').textContent='Despesas ('+mesNome+')';
   document.getElementById('fluxo-receita').textContent='R$ '+rec.toLocaleString('pt-BR');
@@ -1135,8 +1228,13 @@ function renderFluxo(){
   document.getElementById('fluxo-saldo-sub').className='mc-sub '+(saldo>=0?'green':'red');
   document.getElementById('fluxo-titulo').textContent='Lançamentos — '+mesNome+' '+anoAtual;
 
-  document.getElementById('fluxo-list').innerHTML=fluxo.map((f,i)=>`
-    <div class="fe">
+  if(listaFiltrada.length===0){
+    document.getElementById('fluxo-list').innerHTML='<div style="text-align:center;padding:20px;font-size:13px;color:var(--text-secondary);">Nenhum lançamento em '+mesNome+' '+anoAtual+'</div>';
+    return;
+  }
+  document.getElementById('fluxo-list').innerHTML=listaFiltrada.map(f=>{
+    const i=fluxo.indexOf(f);
+    return `<div class="fe">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <span style="font-size:11px;color:var(--text-secondary);flex-shrink:0;min-width:40px;">${f.data}</span>
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.desc}</span>
@@ -1146,7 +1244,8 @@ function renderFluxo(){
         <button class="btn" style="font-size:11px;padding:3px 8px;" onclick="editarLancamento(${i})">Editar</button>
         <button class="btn btn-d" style="font-size:11px;padding:3px 8px;" onclick="excluirLancamento(${i})">Excluir</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function editarLancamento(idx){
@@ -1331,6 +1430,8 @@ function addPagamento(){
   } else {
     pagamentos.push({aluno:nomeAluno,plano,valor:'R$ '+valor,venc,status:'pago',forma});
   }
+  const dataFmt=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  fluxo.unshift({desc:'Mensalidade — '+nomeAluno,tipo:'income',valor:'+R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:data});
   save();
   filterPag(currentPagFilter);
   renderAlunos(alunos);
@@ -1679,14 +1780,167 @@ function showFeedback(msg){
   setTimeout(()=>el.classList.add('hidden'),4000);
 }
 
-let chartsBuilt=false;
 const baseOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11}}}}};
+let relChart1=null,relChart2=null,relChart3=null;
 
 function buildRelatorioCharts(){
-  if(chartsBuilt)return; chartsBuilt=true;
-  new Chart(document.getElementById('chart-receita'),{type:'line',data:{labels:['Jan','Fev','Mar','Abr','Mai'],datasets:[{label:'Receita',data:[10200,11800,12500,13100,14200],borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',fill:true,tension:0.35,pointRadius:4,pointBackgroundColor:'#1D9E75'}]},options:{...baseOpts,scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
-  new Chart(document.getElementById('chart-alunos-mes'),{type:'bar',data:{labels:['Jan','Fev','Mar','Abr','Mai'],datasets:[{label:'Alunos',data:[30,32,34,36,38],backgroundColor:'#378ADD',borderRadius:4}]},options:baseOpts});
-  new Chart(document.getElementById('chart-prof'),{type:'bar',data:{labels:['Mariana Silva','Lucas Ferreira','Juliana Ramos','Rafael Duarte'],datasets:[{label:'Receita',data:[4900,3850,1800,0],backgroundColor:['#378ADD','#1D9E75','#7F77DD','#888780'],borderRadius:4}]},options:{...baseOpts,indexAxis:'y',scales:{x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>'R$'+Math.round(v/1000)+'k'}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+  [relChart1,relChart2,relChart3].forEach(c=>{if(c)try{c.destroy();}catch(e){}});
+  relChart1=relChart2=relChart3=null;
+  const now=new Date();
+  const anoAtual=now.getFullYear();
+  let recAno=0,despAno=0;
+  fluxo.forEach(f=>{
+    if(!f.dataRaw)return;
+    const d=new Date(f.dataRaw+'T00:00:00');
+    if(d.getFullYear()!==anoAtual)return;
+    const v=parseValorNum(f.valor);
+    if(f.tipo==='income')recAno+=v; else despAno+=v;
+  });
+  const alunosAtivos=alunos.filter(a=>a.ativo!==false);
+  const alunosInativos=alunos.filter(a=>a.ativo===false);
+  const ticketMedio=alunosAtivos.length>0?alunosAtivos.reduce((s,a)=>s+getPlanoPreco(a.plano),0)/alunosAtivos.length:0;
+  const pagosPag=pagamentos.filter(p=>p.status==='pago').length;
+  const adimplencia=pagamentos.length>0?Math.round(pagosPag/pagamentos.length*100):0;
+  const saldoAno=recAno-despAno;
+  const setEl=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val;};
+  const setClass=(id,cls)=>{const e=document.getElementById(id);if(e)e.className=cls;};
+  const labelRec=document.getElementById('rel-label-rec');if(labelRec)labelRec.textContent='Receita ('+anoAtual+')';
+  const labelDesp=document.getElementById('rel-label-desp');if(labelDesp)labelDesp.textContent='Despesas ('+anoAtual+')';
+  setEl('rel-receita-acum','R$ '+recAno.toLocaleString('pt-BR'));
+  setEl('rel-despesas-acum','R$ '+despAno.toLocaleString('pt-BR'));
+  setEl('rel-ticket-medio','R$ '+Math.round(ticketMedio).toLocaleString('pt-BR'));
+  setEl('rel-adimplencia',adimplencia+'%');
+  setClass('rel-adimplencia','mc-val '+(adimplencia>=80?'green':adimplencia>=50?'amber':'red'));
+  setEl('rel-adimplencia-sub',pagosPag+'/'+pagamentos.length+' pagamentos');
+  setEl('rel-alunos-ativos',alunosAtivos.length);
+  setEl('rel-alunos-ativos-sub','de '+alunos.length+' total');
+  setEl('rel-alunos-inativos',alunosInativos.length);
+  setEl('rel-saldo-ano','R$ '+Math.abs(saldoAno).toLocaleString('pt-BR'));
+  setClass('rel-saldo-ano','mc-val '+(saldoAno>=0?'green':'red'));
+  setEl('rel-saldo-ano-sub',saldoAno>=0?'Positivo':'Negativo');
+  const labels=[],recData=[],despData=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const m=d.getMonth(),y=d.getFullYear();
+    labels.push(MES[m]);
+    let rec=0,desp=0;
+    fluxo.forEach(f=>{
+      if(!f.dataRaw)return;
+      const fd=new Date(f.dataRaw+'T00:00:00');
+      if(fd.getMonth()!==m||fd.getFullYear()!==y)return;
+      const v=parseValorNum(f.valor);
+      if(f.tipo==='income')rec+=v; else desp+=v;
+    });
+    recData.push(rec);despData.push(desp);
+  }
+  const bOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>'R$'+Math.round(v/1000)+'k'}}}};
+  const c1=document.getElementById('chart-receita');
+  const c2=document.getElementById('chart-alunos-mes');
+  const c3=document.getElementById('chart-prof');
+  if(c1)relChart1=new Chart(c1,{type:'line',data:{labels,datasets:[{label:'Receita',data:recData,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',fill:true,tension:0.35,pointRadius:4,pointBackgroundColor:'#1D9E75'}]},options:bOpts});
+  if(c2)relChart2=new Chart(c2,{type:'bar',data:{labels,datasets:[{label:'Receita',data:recData,backgroundColor:'rgba(29,158,117,0.7)',borderRadius:3},{label:'Despesa',data:despData,backgroundColor:'rgba(226,75,74,0.7)',borderRadius:3}]},options:{...bOpts,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
+  const profLabels=professores.map(p=>p.nome);
+  const profData=professores.map(p=>alunos.filter(a=>a.prof===p.nome&&a.ativo!==false).length);
+  const profCores=['#378ADD','#1D9E75','#7F77DD','#F5A623','#E24B4A','#888780'];
+  if(c3)relChart3=new Chart(c3,{type:'bar',data:{labels:profLabels,datasets:[{label:'Alunos ativos',data:profData,backgroundColor:profCores.slice(0,profLabels.length),borderRadius:4}]},options:{...bOpts,indexAxis:'y',scales:{x:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+}
+
+// ── IMPORTAÇÃO ────────────────────────────────────────────────────────────────
+let importData=[];
+
+function downloadTemplate(){
+  const bom='\uFEFF';
+  const headers='Nome,Telefone,CPF,Email,CEP,Logradouro,Numero,Complemento,Bairro,Municipio,Estado,Plano,Professor,DataInicio,Ativo';
+  const ex='Maria Oliveira,(21) 99999-0001,000.000.000-01,maria@email.com,20040-020,Rua das Flores,123,,Centro,Rio de Janeiro,RJ,Mensal,Mariana Silva,2025-06-01,true';
+  const blob=new Blob([bom+headers+'\n'+ex],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='modelo_importacao_alunos.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function processarArquivoImport(input){
+  const file=input.files[0];
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  const reader=new FileReader();
+  reader.onload=function(e){
+    let rows=[];
+    try{
+      if(ext==='xlsx'||ext==='xls'){
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      } else {
+        const text=e.target.result;
+        const lines=text.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+        if(lines.length<2){alert('Arquivo vazio ou sem dados.');return;}
+        const headers=lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
+        rows=lines.slice(1).map(line=>{
+          const vals=line.split(',').map(v=>v.trim().replace(/^"|"$/g,''));
+          const obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return obj;
+        });
+      }
+    }catch(err){alert('Erro ao ler o arquivo: '+err.message);return;}
+    importData=[];
+    const erros=[];
+    rows.forEach((row,i)=>{
+      const nome=(row['Nome']||row['nome']||'').trim();
+      if(!nome){erros.push('Linha '+(i+2)+': nome vazio — ignorado.');return;}
+      const plano=(row['Plano']||row['plano']||'Mensal').trim();
+      const prof=(row['Professor']||row['professor']||(professores[0]?professores[0].nome:'')).trim();
+      const inicio=(row['DataInicio']||row['Data Inicio']||'').trim();
+      const ativoRaw=(row['Ativo']||row['ativo']||'true').trim().toLowerCase();
+      const ativo=ativoRaw!=='false'&&ativoRaw!=='0'&&ativoRaw!=='não'&&ativoRaw!=='nao';
+      const cor=avCores[(alunos.length+importData.length)%4];
+      const partes=nome.trim().split(/\s+/);
+      const ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
+      let venc='—';
+      if(inicio){try{const d=new Date(inicio+'T00:00:00');if(!isNaN(d)){d.setMonth(d.getMonth()+1);venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}}catch(ee){}}
+      importData.push({nome,ini,cor,plano,prof,venc,status:'pendente',
+        tel:(row['Telefone']||row['telefone']||'').trim(),
+        cpf:(row['CPF']||row['cpf']||'').trim(),
+        email:(row['Email']||row['email']||'').trim(),
+        cep:(row['CEP']||row['cep']||'').trim(),
+        logradouro:(row['Logradouro']||row['logradouro']||'').trim(),
+        numero:(row['Numero']||row['numero']||'').trim(),
+        complemento:(row['Complemento']||row['complemento']||'').trim(),
+        bairro:(row['Bairro']||row['bairro']||'').trim(),
+        municipio:(row['Municipio']||row['municipio']||'').trim(),
+        estado:(row['Estado']||row['estado']||'').trim(),
+        ativo,inicio,hist:[]});
+    });
+    const previewEl=document.getElementById('import-preview');
+    const titleEl=document.getElementById('import-preview-title');
+    const listEl=document.getElementById('import-preview-list');
+    const errosEl=document.getElementById('import-erros');
+    const btnConf=document.getElementById('btn-confirmar-import');
+    previewEl.style.display='';
+    titleEl.textContent=importData.length+' aluno'+(importData.length!==1?'s':'')+' encontrado'+(importData.length!==1?'s':'');
+    listEl.innerHTML=importData.length?importData.map(a=>`<div style="padding:4px 0;border-bottom:0.5px solid var(--border);">${a.nome} · ${a.plano} · ${a.prof||'Sem professor'}</div>`).join(''):'<div style="color:var(--text-secondary);">Nenhum aluno válido encontrado.</div>';
+    errosEl.innerHTML=erros.length?erros.join('<br>'):'';
+    btnConf.style.display=importData.length>0?'inline-flex':'none';
+  };
+  if(ext==='xlsx'||ext==='xls')reader.readAsArrayBuffer(file);
+  else reader.readAsText(file,'UTF-8');
+}
+
+function confirmarImportacao(){
+  if(!importData||importData.length===0)return;
+  const count=importData.length;
+  importData.forEach(a=>{
+    const valor=getPlanoPreco(a.plano);
+    alunos.push(a);
+    pagamentos.push({aluno:a.nome,plano:a.plano,valor:'R$ '+valor,venc:a.venc,status:'pendente',forma:'—'});
+  });
+  importData=[];
+  save();renderAlunos(alunos);renderPagamentos(pagamentos);updateDashboard();
+  document.getElementById('import-file').value='';
+  document.getElementById('import-preview').style.display='none';
+  document.getElementById('btn-confirmar-import').style.display='none';
+  const fb=document.getElementById('import-feedback');
+  fb.textContent=count+' aluno'+(count!==1?'s':'')+' importado'+(count!==1?'s':'')+' com sucesso!';
+  fb.classList.remove('hidden');
+  setTimeout(()=>{fb.classList.add('hidden');closeModal('modal-importar-alunos');},2500);
 }
 
 window.addEventListener('DOMContentLoaded',async ()=>{
