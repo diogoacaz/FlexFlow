@@ -192,7 +192,7 @@
     <div class="auth-logo">Flex Flow</div>
     <div class="auth-sub">Gestão do estúdio</div>
     <div id="auth-login">
-      <div class="fg"><label class="fl">Usuário</label><input class="fi" id="au-user" placeholder="Seu usuário" autocomplete="username"></div>
+      <div class="fg"><label class="fl">E-mail</label><input class="fi" id="au-user" type="email" placeholder="seu@email.com" autocomplete="email"></div>
       <div class="fg"><label class="fl">Senha</label><input class="fi" id="au-pass" type="password" placeholder="Sua senha" autocomplete="current-password"></div>
       <div id="auth-err" class="auth-err hidden"></div>
       <button class="btn btn-p auth-btn" onclick="doLogin()">Entrar</button>
@@ -592,7 +592,7 @@
 <div class="overlay" id="modal-novo-usuario">
   <div class="modal">
     <div class="modal-title">Criar novo usuário</div>
-    <div class="fg"><label class="fl">Usuário</label><input class="fi" id="nu-user" placeholder="3–20 letras, números ou _" autocomplete="off"></div>
+    <div class="fg"><label class="fl">E-mail</label><input class="fi" id="nu-user" type="email" placeholder="seu@email.com" autocomplete="email"></div>
     <div class="fg"><label class="fl">Senha</label><input class="fi" id="nu-pass" type="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
     <div class="fg"><label class="fl">Confirmar senha</label><input class="fi" id="nu-confirm" type="password" placeholder="Repita a senha" autocomplete="new-password"></div>
     <div id="nu-err" class="auth-err hidden"></div>
@@ -807,53 +807,34 @@ function save(){
 }
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
-// Keep sha256 for legacy migration only
-async function sha256(str){
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
 function setAuthErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.remove('hidden');}
 
 async function doLogin(){
-  const u=document.getElementById('au-user').value.trim().toLowerCase();
+  const email=document.getElementById('au-user').value.trim().toLowerCase();
   const p=document.getElementById('au-pass').value;
-  if(!u||!p){setAuthErr('auth-err','Preencha usuário e senha.');return;}
-  const email=u+'@flexflow.app';
+  if(!email||!p){setAuthErr('auth-err','Preencha e-mail e senha.');return;}
   try {
     await auth.signInWithEmailAndPassword(email,p);
     // onAuthStateChanged will call startSession
   } catch(e){
-    const notFound=e.code==='auth/user-not-found'||e.code==='auth/invalid-credential';
-    if(notFound||e.code==='auth/wrong-password'){
-      // Migration path: check legacy localStorage hash
-      const oldUsers=JSON.parse(localStorage.getItem('ff_users')||'{}');
-      if(notFound&&oldUsers[u]){
-        const h=await sha256(p);
-        if(h===oldUsers[u].hash){
-          try {
-            await auth.createUserWithEmailAndPassword(email,p);
-            // onAuthStateChanged handles the rest
-            return;
-          } catch(e2){
-            setAuthErr('auth-err','Erro ao migrar conta: '+e2.message);
-            return;
-          }
-        }
-      }
-      setAuthErr('auth-err',notFound?'Usuário não encontrado.':'Senha incorreta.');
+    if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'||e.code==='auth/invalid-email'){
+      setAuthErr('auth-err','E-mail não encontrado.');
+    } else if(e.code==='auth/wrong-password'){
+      setAuthErr('auth-err','Senha incorreta.');
     } else {
       setAuthErr('auth-err','Erro ao entrar: '+e.message);
     }
   }
 }
 
-async function startSession(username,uid){
-  currentUser=username;
+async function startSession(email,uid){
+  currentUser=email;
   currentUid=uid;
+  const displayName=email.split('@')[0];
   resetInactivityTimer();
   document.getElementById('auth-screen').style.display='none';
-  document.getElementById('user-badge').textContent=username;
-  document.getElementById('sidebar-username').textContent=username;
+  document.getElementById('user-badge').textContent=displayName;
+  document.getElementById('sidebar-username').textContent=displayName;
   document.getElementById('sync-overlay').style.display='flex';
   try {
     // Try uid-keyed doc first (new system)
@@ -866,8 +847,8 @@ async function startSession(username,uid){
       professores=d.professores||defaultProfessores;
       planos=d.planos||defaultPlanos;
     } else {
-      // Migration: try old username-keyed doc
-      const oldDoc=await db.collection('users').doc(username).get();
+      // Migration: try old email-local-part-keyed doc (legacy)
+      const oldDoc=await db.collection('users').doc(email.split('@')[0]).get();
       if(oldDoc.exists){
         const d=oldDoc.data();
         alunos=d.alunos||defaultAlunos;
@@ -876,12 +857,12 @@ async function startSession(username,uid){
         professores=d.professores||defaultProfessores;
         planos=d.planos||defaultPlanos;
       } else {
-        // Fall back to localStorage (try both uid and username keys)
-        alunos=JSON.parse(localStorage.getItem('ff_alunos_'+uid)||localStorage.getItem('ff_alunos_'+username)||'null')||defaultAlunos;
-        pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+uid)||localStorage.getItem('ff_pagamentos_'+username)||'null')||defaultPagamentos;
-        fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+uid)||localStorage.getItem('ff_fluxo_'+username)||'null')||defaultFluxo;
-        professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||localStorage.getItem('ff_professores_'+username)||'null')||defaultProfessores;
-        planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||localStorage.getItem('ff_planos_'+username)||'null')||defaultPlanos;
+        // Fall back to localStorage
+        alunos=JSON.parse(localStorage.getItem('ff_alunos_'+uid)||'null')||defaultAlunos;
+        pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+uid)||'null')||defaultPagamentos;
+        fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+uid)||'null')||defaultFluxo;
+        professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||'null')||defaultProfessores;
+        planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
       }
       save(); // upload to uid-keyed doc
     }
@@ -909,24 +890,22 @@ function logout(inactivity=false){
   // Clear all local data for this user
   ['alunos','pagamentos','fluxo','professores','planos'].forEach(k=>{
     if(currentUid)localStorage.removeItem('ff_'+k+'_'+currentUid);
-    if(currentUser)localStorage.removeItem('ff_'+k+'_'+currentUser);
   });
   currentUser=null; currentUid=null;
   auth.signOut().catch(()=>{}).finally(()=>location.reload());
 }
 
 async function addNovoUsuario(){
-  const u=document.getElementById('nu-user').value.trim().toLowerCase();
+  const email=document.getElementById('nu-user').value.trim().toLowerCase();
   const p=document.getElementById('nu-pass').value;
   const c=document.getElementById('nu-confirm').value;
   const errEl=document.getElementById('nu-err');
   const okEl=document.getElementById('nu-ok');
   errEl.classList.add('hidden'); okEl.classList.add('hidden');
-  if(!u||!p){errEl.textContent='Preencha todos os campos.';errEl.classList.remove('hidden');return;}
-  if(!/^[a-z0-9_]{3,20}$/.test(u)){errEl.textContent='Usuário: 3–20 caracteres (letras, números ou _).';errEl.classList.remove('hidden');return;}
+  if(!email||!p){errEl.textContent='Preencha todos os campos.';errEl.classList.remove('hidden');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='E-mail inválido.';errEl.classList.remove('hidden');return;}
   if(p.length<6){errEl.textContent='A senha deve ter ao menos 6 caracteres.';errEl.classList.remove('hidden');return;}
   if(p!==c){errEl.textContent='As senhas não coincidem.';errEl.classList.remove('hidden');return;}
-  const email=u+'@flexflow.app';
   try {
     // Use a secondary app instance so the current admin stays signed in
     const secondaryApp=firebase.initializeApp(firebaseConfig,'Secondary_'+Date.now());
@@ -934,11 +913,11 @@ async function addNovoUsuario(){
     await secondaryApp.auth().signOut();
     await secondaryApp.delete();
     ['nu-user','nu-pass','nu-confirm'].forEach(id=>document.getElementById(id).value='');
-    okEl.textContent='Usuário "'+u+'" criado com sucesso!';
+    okEl.textContent='Usuário "'+email+'" criado com sucesso!';
     okEl.classList.remove('hidden');
     setTimeout(()=>closeModal('modal-novo-usuario'),1500);
   } catch(e){
-    errEl.textContent=e.code==='auth/email-already-in-use'?'Este usuário já existe.':'Erro: '+e.message;
+    errEl.textContent=e.code==='auth/email-already-in-use'?'Este e-mail já está cadastrado.':'Erro: '+e.message;
     errEl.classList.remove('hidden');
   }
 }
@@ -2147,8 +2126,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Firebase Auth — restore session or show login screen
   auth.onAuthStateChanged(async user=>{
     if(user){
-      const username=user.email.replace('@flexflow.app','');
-      await startSession(username,user.uid);
+      await startSession(user.email,user.uid);
     }
     // If no user, auth screen stays visible (CSS default)
   });
