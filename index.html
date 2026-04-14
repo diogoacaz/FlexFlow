@@ -123,6 +123,9 @@
   .auth-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 28px; }
   .auth-err { background: var(--bg-danger); color: var(--text-danger); padding: 10px 13px; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 12px; }
   .auth-btn { width: 100%; justify-content: center; padding: 10px; font-size: 14px; }
+  .auth-link { background: none; border: none; color: var(--text-info); font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; display: block; text-align: center; margin-top: 14px; font-family: var(--font); }
+  .auth-link:hover { opacity: 0.75; }
+  .auth-ok { background: var(--bg-success); color: var(--text-success); padding: 10px 13px; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 12px; }
   .auth-switch { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 16px; }
   .auth-switch span { color: var(--text-info); cursor: pointer; font-weight: 600; text-decoration: underline; }
   /* Sidebar user section */
@@ -196,6 +199,16 @@
       <div class="fg"><label class="fl">Senha</label><input class="fi" id="au-pass" type="password" placeholder="Sua senha" autocomplete="current-password"></div>
       <div id="auth-err" class="auth-err hidden"></div>
       <button class="btn btn-p auth-btn" onclick="doLogin()">Entrar</button>
+      <button class="auth-link" onclick="showRecovery()">Esqueci minha senha</button>
+    </div>
+    <div id="auth-recovery" class="hidden">
+      <button class="auth-link" style="text-align:left;margin-bottom:18px;margin-top:0;" onclick="backToLogin()">← Voltar ao login</button>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Recuperar senha</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:18px;">Enviaremos um link de redefinição para o seu e-mail.</div>
+      <div class="fg"><label class="fl">E-mail</label><input class="fi" id="rec-email" type="email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div id="rec-err" class="auth-err hidden"></div>
+      <div id="rec-ok" class="auth-ok hidden"></div>
+      <button class="btn btn-p auth-btn" onclick="sendPasswordReset()">Enviar link de recuperação</button>
     </div>
   </div>
 </div>
@@ -824,6 +837,34 @@ async function doLogin(){
     } else {
       setAuthErr('auth-err','Erro ao entrar: '+e.message);
     }
+  }
+}
+
+function showRecovery(){
+  document.getElementById('auth-login').classList.add('hidden');
+  document.getElementById('auth-recovery').classList.remove('hidden');
+  document.getElementById('rec-email').value=document.getElementById('au-user').value;
+  document.getElementById('rec-err').classList.add('hidden');
+  document.getElementById('rec-ok').classList.add('hidden');
+}
+function backToLogin(){
+  document.getElementById('auth-recovery').classList.add('hidden');
+  document.getElementById('auth-login').classList.remove('hidden');
+}
+async function sendPasswordReset(){
+  const email=document.getElementById('rec-email').value.trim().toLowerCase();
+  const errEl=document.getElementById('rec-err');
+  const okEl=document.getElementById('rec-ok');
+  errEl.classList.add('hidden'); okEl.classList.add('hidden');
+  if(!email){errEl.textContent='Informe o e-mail.';errEl.classList.remove('hidden');return;}
+  try {
+    await auth.sendPasswordResetEmail(email);
+    okEl.textContent='Link enviado para '+email+'. Verifique sua caixa de entrada.';
+    okEl.classList.remove('hidden');
+    setTimeout(()=>backToLogin(),4000);
+  } catch(e){
+    errEl.textContent=e.code==='auth/user-not-found'?'E-mail não encontrado.':'Erro: '+e.message;
+    errEl.classList.remove('hidden');
   }
 }
 
