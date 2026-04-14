@@ -948,8 +948,12 @@ function updateDashboard(){
   document.getElementById('dash-receita-realizada').textContent='R$ '+recRealizada.toLocaleString('pt-BR');
   document.getElementById('dash-receita-realizada-sub').textContent=pagosMes.length+' pagamento'+(pagosMes.length!==1?'s':'');
 
-  // Row 2 — Pagamentos pendentes (todos pendentes/atrasados)
-  const pendentes=pagamentos.filter(p=>p.status!=='pago');
+  // Row 2 — Pagamentos pendentes do mês atual
+  const pendentes=pagamentos.filter(p=>{
+    if(p.status==='pago')return false;
+    const vm=parseVencMes(p.venc);
+    return vm&&vm.mes===mesAtual;
+  });
   const totalPend=pendentes.reduce((s,p)=>s+parseValorNum(p.valor),0);
   document.getElementById('dash-pend-count').textContent=pendentes.length;
   document.getElementById('dash-pend-val').textContent='R$ '+totalPend.toLocaleString('pt-BR')+' em aberto';
