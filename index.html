@@ -1109,6 +1109,8 @@ function applyLogo(src){
   if(navigator.serviceWorker&&navigator.serviceWorker.controller){
     navigator.serviceWorker.controller.postMessage({type:'UPDATE_ICON',logo:src||null});
   }
+  // Atualiza manifest dinamicamente com a logo (fix para desktop Chrome)
+  updatePwaManifest(src);
   // Config page
   const preview=document.getElementById('logo-preview');
   const placeholder=document.getElementById('logo-placeholder');
@@ -1143,6 +1145,25 @@ function removeLogo(){
   applyLogo(null);
   save();
   document.getElementById('logo-file-input').value='';
+}
+function updatePwaManifest(src){
+  const base={
+    name:'Flex Flow',short_name:'Flex Flow',
+    description:'Gestão do estúdio de Pilates',
+    start_url:'/FlexFlow/',display:'standalone',
+    background_color:'#000000',theme_color:'#378ADD',
+    orientation:'portrait-primary',
+    icons:src
+      ?[{src,sizes:'512x512',type:'image/png',purpose:'any maskable'}]
+      :[{src:'icons/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},
+        {src:'icons/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]
+  };
+  const link=document.querySelector('link[rel="manifest"]');
+  if(!link)return;
+  if(link._blobUrl)URL.revokeObjectURL(link._blobUrl);
+  const url=URL.createObjectURL(new Blob([JSON.stringify(base)],{type:'application/manifest+json'}));
+  link._blobUrl=url;
+  link.href=url;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
