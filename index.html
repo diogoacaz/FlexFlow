@@ -158,9 +158,6 @@
     #tbl-alunos th:nth-child(3), #tbl-alunos td:nth-child(3),
     #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
     #tbl-alunos th:nth-child(5), #tbl-alunos td:nth-child(5) { display: none; }
-    #tbl-pagamentos th:nth-child(2), #tbl-pagamentos td:nth-child(2),
-    #tbl-pagamentos th:nth-child(4), #tbl-pagamentos td:nth-child(4),
-    #tbl-pagamentos th:nth-child(6), #tbl-pagamentos td:nth-child(6) { display: none; }
     /* Dashboard: 3 columns even on mobile */
     #page-dashboard .g3 { grid-template-columns: repeat(3, 1fr); gap: 6px; }
     #page-dashboard .g3 .mc { padding: 9px 8px; }
@@ -344,7 +341,7 @@
         </div>
         <div class="card" style="padding:0;overflow:hidden;">
           <table class="tbl" id="tbl-pagamentos">
-            <thead><tr><th style="width:20%">Aluno</th><th style="width:17%">Plano</th><th style="width:11%">Valor</th><th style="width:12%">Vencimento</th><th style="width:10%">Status</th><th style="width:14%">Forma pag.</th><th style="width:16%">Ação</th></tr></thead>
+            <thead><tr><th style="width:40%">Aluno</th><th style="width:30%">Valor</th><th style="width:30%">Status</th></tr></thead>
             <tbody id="pagamentos-body"></tbody>
           </table>
         </div>
@@ -567,7 +564,8 @@
             <div class="fg"><label class="fl">Status</label><select class="fi" id="pagdet-status"><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="atrasado">Atrasado</option></select></div>
             <div class="fg"><label class="fl">Data de registro do pagamento</label><input class="fi" id="pagdet-data-pag" type="date"></div>
           </div>
-          <div style="margin-top:20px;display:flex;justify-content:flex-end;">
+          <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
+            <button class="btn btn-s" id="pagdet-btn-pago" onclick="marcarPagoDetalhe()" style="display:none;">&#10003; Marcar como pago</button>
             <button class="btn btn-p" onclick="savePagamentoDetalhe()">Salvar alterações</button>
           </div>
         </div>
@@ -1181,12 +1179,9 @@ function renderPagamentos(lista){
   document.getElementById('pagamentos-body').innerHTML=lista.map(p=>{
     const ri=pagamentos.indexOf(p);
     return `<tr style="cursor:pointer;" onclick="showPagamentoDetalhe(${ri})">
-      <td>${p.aluno}</td><td>${p.plano}</td><td>${p.valor}</td><td>${p.venc}</td>
+      <td>${p.aluno}</td>
+      <td>${p.valor}</td>
       <td><span class="badge ${p.status==='pago'?'bg':p.status==='pendente'?'ba':'br'}">${p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado'}</span></td>
-      <td>${p.forma}</td>
-      <td style="white-space:nowrap;">
-        ${p.status!=='pago'?`<button class="btn btn-s" style="font-size:11px;padding:3px 7px;" onclick="event.stopPropagation();marcarPago(${ri})">Pago</button>`:''}
-      </td>
     </tr>`;
   }).join('');
 }
@@ -1759,7 +1754,16 @@ function showPagamentoDetalhe(idx){
   document.getElementById('pagdet-forma').value=p.forma||'—';
   document.getElementById('pagdet-status').value=p.status||'pendente';
   document.getElementById('pagdet-data-pag').value=p.dataPagRaw||'';
+  const btnPago=document.getElementById('pagdet-btn-pago');
+  if(btnPago)btnPago.style.display=p.status!=='pago'?'inline-flex':'none';
   showPage('pagamento-detalhe');
+}
+
+function marcarPagoDetalhe(){
+  document.getElementById('pagdet-status').value='pago';
+  if(!document.getElementById('pagdet-data-pag').value)
+    document.getElementById('pagdet-data-pag').value=new Date().toISOString().split('T')[0];
+  savePagamentoDetalhe();
 }
 
 function savePagamentoDetalhe(){
