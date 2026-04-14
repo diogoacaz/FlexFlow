@@ -1,4 +1,9 @@
-const CACHE = 'flexflow-v1';
+const CACHE = 'flexflow-v2';
+const ICON_PATHS = [
+  '/FlexFlow/icons/icon-192.png',
+  '/FlexFlow/icons/icon-512.png',
+  '/FlexFlow/icons/apple-touch-icon.png',
+];
 const PRECACHE = [
   '/FlexFlow/',
   '/FlexFlow/index.html',
@@ -25,6 +30,23 @@ self.addEventListener('activate', e => {
     )
   );
   self.clients.claim();
+});
+
+// Recebe logo do app e substitui os ícones em cache
+self.addEventListener('message', async e => {
+  if (!e.data || e.data.type !== 'UPDATE_ICON') return;
+  const cache = await caches.open(CACHE);
+  if (e.data.logo) {
+    try {
+      const blob = await fetch(e.data.logo).then(r => r.blob());
+      for (const path of ICON_PATHS) {
+        await cache.put(path, new Response(blob, {headers: {'Content-Type': 'image/png'}}));
+      }
+    } catch(err) {}
+  } else {
+    // Logo removida — apaga do cache para volcar ao ícone padrão
+    for (const path of ICON_PATHS) await cache.delete(path);
+  }
 });
 
 self.addEventListener('fetch', e => {

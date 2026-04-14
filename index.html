@@ -1102,6 +1102,13 @@ function applyLogo(src){
   const sideImg=document.getElementById('sidebar-logo-img');
   if(src){sideImg.src=src;sideImg.classList.remove('hidden');}
   else{sideImg.classList.add('hidden');}
+  // Atualiza apple-touch-icon (iOS) dinamicamente
+  const atiLink=document.querySelector('link[rel="apple-touch-icon"]');
+  if(atiLink)atiLink.href=src||'icons/apple-touch-icon.png';
+  // Envia ao service worker para substituir ícones em cache (PWA install)
+  if(navigator.serviceWorker&&navigator.serviceWorker.controller){
+    navigator.serviceWorker.controller.postMessage({type:'UPDATE_ICON',logo:src||null});
+  }
   // Config page
   const preview=document.getElementById('logo-preview');
   const placeholder=document.getElementById('logo-placeholder');
