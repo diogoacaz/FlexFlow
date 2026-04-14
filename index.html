@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -776,59 +777,87 @@ const defaultPlanos=[
 ];
 
 // ── FIREBASE ──────────────────────────────────────────────────────────────────
-firebase.initializeApp({
+const firebaseConfig={
   apiKey:"AIzaSyB4FaoH4xBCJgSDZlHriI9yYAktuT3PObQ",
   authDomain:"flex-flow-1328c.firebaseapp.com",
   projectId:"flex-flow-1328c",
   storageBucket:"flex-flow-1328c.firebasestorage.app",
   messagingSenderId:"608155185696",
   appId:"1:608155185696:web:66bf60bcb2811ee96e0245"
-});
+};
+firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+const auth=firebase.auth();
 // ─────────────────────────────────────────────────────────────────────────────
 
-let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null;
+let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null;
 
 function save(){
-  if(!currentUser)return;
+  if(!currentUid)return;
   // Save locally for instant feedback
-  localStorage.setItem('ff_alunos_'+currentUser,JSON.stringify(alunos));
-  localStorage.setItem('ff_pagamentos_'+currentUser,JSON.stringify(pagamentos));
-  localStorage.setItem('ff_fluxo_'+currentUser,JSON.stringify(fluxo));
-  localStorage.setItem('ff_professores_'+currentUser,JSON.stringify(professores));
-  localStorage.setItem('ff_planos_'+currentUser,JSON.stringify(planos));
+  localStorage.setItem('ff_alunos_'+currentUid,JSON.stringify(alunos));
+  localStorage.setItem('ff_pagamentos_'+currentUid,JSON.stringify(pagamentos));
+  localStorage.setItem('ff_fluxo_'+currentUid,JSON.stringify(fluxo));
+  localStorage.setItem('ff_professores_'+currentUid,JSON.stringify(professores));
+  localStorage.setItem('ff_planos_'+currentUid,JSON.stringify(planos));
   // Sync to Firebase (fire-and-forget)
-  db.collection('users').doc(currentUser)
+  db.collection('users').doc(currentUid)
     .set({alunos,pagamentos,fluxo,professores,planos})
     .catch(e=>console.warn('Firebase sync error:',e));
 }
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
+// Keep sha256 for legacy migration only
 async function sha256(str){
   const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 function setAuthErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.classList.remove('hidden');}
+
 async function doLogin(){
   const u=document.getElementById('au-user').value.trim().toLowerCase();
   const p=document.getElementById('au-pass').value;
   if(!u||!p){setAuthErr('auth-err','Preencha usuário e senha.');return;}
-  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
-  if(!users[u]){setAuthErr('auth-err','Usuário não encontrado.');return;}
-  const h=await sha256(p);
-  if(h!==users[u].hash){setAuthErr('auth-err','Senha incorreta.');return;}
-  await startSession(u);
+  const email=u+'@flexflow.app';
+  try {
+    await auth.signInWithEmailAndPassword(email,p);
+    // onAuthStateChanged will call startSession
+  } catch(e){
+    const notFound=e.code==='auth/user-not-found'||e.code==='auth/invalid-credential';
+    if(notFound||e.code==='auth/wrong-password'){
+      // Migration path: check legacy localStorage hash
+      const oldUsers=JSON.parse(localStorage.getItem('ff_users')||'{}');
+      if(notFound&&oldUsers[u]){
+        const h=await sha256(p);
+        if(h===oldUsers[u].hash){
+          try {
+            await auth.createUserWithEmailAndPassword(email,p);
+            // onAuthStateChanged handles the rest
+            return;
+          } catch(e2){
+            setAuthErr('auth-err','Erro ao migrar conta: '+e2.message);
+            return;
+          }
+        }
+      }
+      setAuthErr('auth-err',notFound?'Usuário não encontrado.':'Senha incorreta.');
+    } else {
+      setAuthErr('auth-err','Erro ao entrar: '+e.message);
+    }
+  }
 }
-async function startSession(username){
+
+async function startSession(username,uid){
   currentUser=username;
-  localStorage.setItem('ff_current_user',username);
+  currentUid=uid;
+  resetInactivityTimer();
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('user-badge').textContent=username;
   document.getElementById('sidebar-username').textContent=username;
-  // Show loading spinner
   document.getElementById('sync-overlay').style.display='flex';
   try {
-    const doc=await db.collection('users').doc(username).get();
+    // Try uid-keyed doc first (new system)
+    let doc=await db.collection('users').doc(uid).get();
     if(doc.exists){
       const d=doc.data();
       alunos=d.alunos||defaultAlunos;
@@ -837,21 +866,32 @@ async function startSession(username){
       professores=d.professores||defaultProfessores;
       planos=d.planos||defaultPlanos;
     } else {
-      // First login on this device — migrate localStorage data (if any) to Firebase
-      alunos=JSON.parse(localStorage.getItem('ff_alunos_'+username))||defaultAlunos;
-      pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+username))||defaultPagamentos;
-      fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+username))||defaultFluxo;
-      professores=JSON.parse(localStorage.getItem('ff_professores_'+username))||defaultProfessores;
-      planos=JSON.parse(localStorage.getItem('ff_planos_'+username))||defaultPlanos;
-      save(); // upload to Firebase
+      // Migration: try old username-keyed doc
+      const oldDoc=await db.collection('users').doc(username).get();
+      if(oldDoc.exists){
+        const d=oldDoc.data();
+        alunos=d.alunos||defaultAlunos;
+        pagamentos=d.pagamentos||defaultPagamentos;
+        fluxo=d.fluxo||defaultFluxo;
+        professores=d.professores||defaultProfessores;
+        planos=d.planos||defaultPlanos;
+      } else {
+        // Fall back to localStorage (try both uid and username keys)
+        alunos=JSON.parse(localStorage.getItem('ff_alunos_'+uid)||localStorage.getItem('ff_alunos_'+username)||'null')||defaultAlunos;
+        pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+uid)||localStorage.getItem('ff_pagamentos_'+username)||'null')||defaultPagamentos;
+        fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+uid)||localStorage.getItem('ff_fluxo_'+username)||'null')||defaultFluxo;
+        professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||localStorage.getItem('ff_professores_'+username)||'null')||defaultProfessores;
+        planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||localStorage.getItem('ff_planos_'+username)||'null')||defaultPlanos;
+      }
+      save(); // upload to uid-keyed doc
     }
-  } catch(e) {
+  } catch(e){
     console.warn('Firebase offline, usando dados locais:',e);
-    alunos=JSON.parse(localStorage.getItem('ff_alunos_'+username))||defaultAlunos;
-    pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+username))||defaultPagamentos;
-    fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+username))||defaultFluxo;
-    professores=JSON.parse(localStorage.getItem('ff_professores_'+username))||defaultProfessores;
-    planos=JSON.parse(localStorage.getItem('ff_planos_'+username))||defaultPlanos;
+    alunos=JSON.parse(localStorage.getItem('ff_alunos_'+uid)||'null')||defaultAlunos;
+    pagamentos=JSON.parse(localStorage.getItem('ff_pagamentos_'+uid)||'null')||defaultPagamentos;
+    fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+uid)||'null')||defaultFluxo;
+    professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||'null')||defaultProfessores;
+    planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
   }
   document.getElementById('sync-overlay').style.display='none';
   renderProfessores();
@@ -862,10 +902,19 @@ async function startSession(username){
   renderNotificacoes();
   updateDashboard();
 }
-function logout(){
-  localStorage.removeItem('ff_current_user');
-  location.reload();
+
+function logout(inactivity=false){
+  clearTimeout(inactivityTimer);
+  if(inactivity)sessionStorage.setItem('ff_inactive','1');
+  // Clear all local data for this user
+  ['alunos','pagamentos','fluxo','professores','planos'].forEach(k=>{
+    if(currentUid)localStorage.removeItem('ff_'+k+'_'+currentUid);
+    if(currentUser)localStorage.removeItem('ff_'+k+'_'+currentUser);
+  });
+  currentUser=null; currentUid=null;
+  auth.signOut().catch(()=>{}).finally(()=>location.reload());
 }
+
 async function addNovoUsuario(){
   const u=document.getElementById('nu-user').value.trim().toLowerCase();
   const p=document.getElementById('nu-pass').value;
@@ -877,15 +926,33 @@ async function addNovoUsuario(){
   if(!/^[a-z0-9_]{3,20}$/.test(u)){errEl.textContent='Usuário: 3–20 caracteres (letras, números ou _).';errEl.classList.remove('hidden');return;}
   if(p.length<6){errEl.textContent='A senha deve ter ao menos 6 caracteres.';errEl.classList.remove('hidden');return;}
   if(p!==c){errEl.textContent='As senhas não coincidem.';errEl.classList.remove('hidden');return;}
-  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
-  if(users[u]){errEl.textContent='Este usuário já existe.';errEl.classList.remove('hidden');return;}
-  users[u]={hash:await sha256(p)};
-  localStorage.setItem('ff_users',JSON.stringify(users));
-  ['nu-user','nu-pass','nu-confirm'].forEach(id=>document.getElementById(id).value='');
-  okEl.textContent='Usuário "'+u+'" criado com sucesso!';
-  okEl.classList.remove('hidden');
-  setTimeout(()=>closeModal('modal-novo-usuario'),1500);
+  const email=u+'@flexflow.app';
+  try {
+    // Use a secondary app instance so the current admin stays signed in
+    const secondaryApp=firebase.initializeApp(firebaseConfig,'Secondary_'+Date.now());
+    await secondaryApp.auth().createUserWithEmailAndPassword(email,p);
+    await secondaryApp.auth().signOut();
+    await secondaryApp.delete();
+    ['nu-user','nu-pass','nu-confirm'].forEach(id=>document.getElementById(id).value='');
+    okEl.textContent='Usuário "'+u+'" criado com sucesso!';
+    okEl.classList.remove('hidden');
+    setTimeout(()=>closeModal('modal-novo-usuario'),1500);
+  } catch(e){
+    errEl.textContent=e.code==='auth/email-already-in-use'?'Este usuário já existe.':'Erro: '+e.message;
+    errEl.classList.remove('hidden');
+  }
 }
+
+// ── INACTIVITY TIMER ─────────────────────────────────────────────────────────
+let inactivityTimer=null;
+const INACTIVITY_MS=30*60*1000; // 30 minutes
+function resetInactivityTimer(){
+  clearTimeout(inactivityTimer);
+  inactivityTimer=setTimeout(()=>logout(true),INACTIVITY_MS);
+}
+['click','keydown','touchstart','scroll'].forEach(ev=>{
+  document.addEventListener(ev,()=>{if(currentUid)resetInactivityTimer();},{passive:true});
+});
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -2066,21 +2133,25 @@ function confirmarImportacao(){
   setTimeout(()=>{fb.classList.add('hidden');closeModal('modal-importar-alunos');},2500);
 }
 
-window.addEventListener('DOMContentLoaded',async ()=>{
-  // Garantir que o usuário admin padrão existe
-  const users=JSON.parse(localStorage.getItem('ff_users')||'{}');
-  if(!users['admin']){
-    users['admin']={hash:'8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'};
-    localStorage.setItem('ff_users',JSON.stringify(users));
+window.addEventListener('DOMContentLoaded',()=>{
+  // Show inactivity message if session expired
+  if(sessionStorage.getItem('ff_inactive')){
+    sessionStorage.removeItem('ff_inactive');
+    setAuthErr('auth-err','Sessão encerrada por inatividade. Faça login novamente.');
   }
-  // Restore session from localStorage (persists across browser restarts)
-  const saved=localStorage.getItem('ff_current_user');
-  if(saved){await startSession(saved);}
   // Enter key shortcut for login form
   document.getElementById('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   // Dashboard charts (always built, data loaded after login)
   dashChart=new Chart(document.getElementById('chart-dash'),{type:'bar',data:{labels:[],datasets:[{label:'Receita',data:[],backgroundColor:'#1D9E75',borderRadius:3},{label:'Despesa',data:[],backgroundColor:'#E24B4A',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:10},callback:v=>'R$'+Math.round(v/1000)+'k'}}}}});
   planChart=new Chart(document.getElementById('chart-planos'),{type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:['#378ADD','#7F77DD','#1D9E75','#F5A623','#E24B4A'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+  // Firebase Auth — restore session or show login screen
+  auth.onAuthStateChanged(async user=>{
+    if(user){
+      const username=user.email.replace('@flexflow.app','');
+      await startSession(username,user.uid);
+    }
+    // If no user, auth screen stays visible (CSS default)
+  });
 });
 </script>
 
