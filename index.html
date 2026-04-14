@@ -128,6 +128,8 @@
   .auth-ok { background: var(--bg-success); color: var(--text-success); padding: 10px 13px; border-radius: var(--radius-md); font-size: 12px; margin-bottom: 12px; }
   .auth-switch { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 16px; }
   .auth-switch span { color: var(--text-info); cursor: pointer; font-weight: 600; text-decoration: underline; }
+  .logo-upload-zone { border: 1.5px dashed var(--border-md); border-radius: var(--radius-lg); padding: 28px 20px; text-align: center; cursor: pointer; transition: background .15s; }
+  .logo-upload-zone:hover { background: var(--bg-secondary); }
   /* Sidebar user section */
   .sidebar-user { padding: 12px; border-top: 0.5px solid var(--border); }
   .sidebar-uname { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
@@ -192,8 +194,11 @@
 <!-- AUTH SCREEN -->
 <div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo">Flex Flow</div>
-    <div class="auth-sub">Gestão do estúdio</div>
+    <div style="text-align:center;margin-bottom:24px;">
+      <img id="auth-logo-img" src="" alt="Logo" class="hidden" style="width:80px;height:80px;object-fit:contain;border-radius:16px;display:block;margin:0 auto 10px;">
+      <div class="auth-logo" id="auth-logo-text">Flex Flow</div>
+      <div class="auth-sub" style="margin-bottom:0;">Gestão do estúdio</div>
+    </div>
     <div id="auth-login">
       <div class="fg"><label class="fl">E-mail</label><input class="fi" id="au-user" type="email" placeholder="seu@email.com" autocomplete="email"></div>
       <div class="fg"><label class="fl">Senha</label><input class="fi" id="au-pass" type="password" placeholder="Sua senha" autocomplete="current-password"></div>
@@ -218,6 +223,7 @@
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="logo">
+      <img id="sidebar-logo-img" src="" alt="Logo" class="hidden" style="width:38px;height:38px;object-fit:contain;border-radius:8px;display:block;margin-bottom:8px;">
       <div class="logo-t">Flex Flow</div>
       <div class="logo-s">Gestão do estúdio</div>
     </div>
@@ -231,6 +237,7 @@
       <div class="ni" onclick="showPage('relatorios')"><span class="ni-icon">&#9632;</span><span>Relatórios</span></div>
       <div class="ni" onclick="showPage('notificacoes')"><span class="ni-icon">&#9632;</span><span>Notificações</span><span class="notif-dot"></span></div>
       <div class="ni" onclick="showPage('exportar')"><span class="ni-icon">&#9632;</span><span>Exportar dados</span></div>
+      <div class="ni" onclick="showPage('configuracoes')"><span class="ni-icon">&#9881;</span><span>Configurações</span></div>
     </nav>
     <div class="sidebar-user">
       <div class="sidebar-uname" id="sidebar-username"></div>
@@ -597,6 +604,26 @@
         <div id="export-feedback" class="hidden feedback" style="background:var(--bg-success);color:var(--text-success);"></div>
       </div>
 
+      <!-- CONFIGURAÇÕES -->
+      <div id="page-configuracoes" class="hidden">
+        <div class="card" style="max-width:460px;">
+          <div class="sec-title" style="margin-bottom:20px;">Identidade visual</div>
+          <div class="logo-upload-zone" onclick="document.getElementById('logo-file-input').click()">
+            <img id="logo-preview" src="" alt="Logo atual" class="hidden" style="width:100px;height:100px;object-fit:contain;border-radius:12px;border:0.5px solid var(--border);display:block;margin:0 auto 14px;">
+            <div id="logo-placeholder" style="font-size:13px;color:var(--text-secondary);">
+              Clique para selecionar a imagem da logo<br>
+              <span style="font-size:11px;margin-top:4px;display:block;">PNG, JPG ou SVG · Recomendado: 400×400 px</span>
+            </div>
+          </div>
+          <input type="file" id="logo-file-input" accept="image/*" class="hidden" onchange="handleLogoUpload(this)">
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-p" onclick="document.getElementById('logo-file-input').click()">Enviar nova logo</button>
+            <button class="btn btn-d hidden" id="btn-remove-logo" onclick="removeLogo()">Remover logo</button>
+          </div>
+          <div id="logo-feedback" class="hidden feedback" style="margin-top:12px;background:var(--bg-success);color:var(--text-success);"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -803,7 +830,7 @@ const db=firebase.firestore();
 const auth=firebase.auth();
 // ─────────────────────────────────────────────────────────────────────────────
 
-let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null;
+let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null, studioLogo=null;
 
 function save(){
   if(!currentUid)return;
@@ -813,9 +840,11 @@ function save(){
   localStorage.setItem('ff_fluxo_'+currentUid,JSON.stringify(fluxo));
   localStorage.setItem('ff_professores_'+currentUid,JSON.stringify(professores));
   localStorage.setItem('ff_planos_'+currentUid,JSON.stringify(planos));
+  if(studioLogo)localStorage.setItem('ff_logo_'+currentUid,studioLogo);
+  else localStorage.removeItem('ff_logo_'+currentUid);
   // Sync to Firebase (fire-and-forget)
   db.collection('users').doc(currentUid)
-    .set({alunos,pagamentos,fluxo,professores,planos})
+    .set({alunos,pagamentos,fluxo,professores,planos,studioLogo:studioLogo||null})
     .catch(e=>console.warn('Firebase sync error:',e));
 }
 
@@ -887,6 +916,7 @@ async function startSession(email,uid){
       fluxo=d.fluxo||defaultFluxo;
       professores=d.professores||defaultProfessores;
       planos=d.planos||defaultPlanos;
+      studioLogo=d.studioLogo||null;
     } else {
       // Migration: try old email-local-part-keyed doc (legacy)
       const oldDoc=await db.collection('users').doc(email.split('@')[0]).get();
@@ -897,6 +927,7 @@ async function startSession(email,uid){
         fluxo=d.fluxo||defaultFluxo;
         professores=d.professores||defaultProfessores;
         planos=d.planos||defaultPlanos;
+        studioLogo=d.studioLogo||null;
       } else {
         // Fall back to localStorage
         alunos=JSON.parse(localStorage.getItem('ff_alunos_'+uid)||'null')||defaultAlunos;
@@ -904,6 +935,7 @@ async function startSession(email,uid){
         fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+uid)||'null')||defaultFluxo;
         professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||'null')||defaultProfessores;
         planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
+        studioLogo=localStorage.getItem('ff_logo_'+uid)||null;
       }
       save(); // upload to uid-keyed doc
     }
@@ -914,7 +946,9 @@ async function startSession(email,uid){
     fluxo=JSON.parse(localStorage.getItem('ff_fluxo_'+uid)||'null')||defaultFluxo;
     professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||'null')||defaultProfessores;
     planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
+    studioLogo=localStorage.getItem('ff_logo_'+uid)||null;
   }
+  applyLogo(studioLogo);
   document.getElementById('sync-overlay').style.display='none';
   renderProfessores();
   renderPlanos();
@@ -973,6 +1007,55 @@ function resetInactivityTimer(){
 ['click','keydown','touchstart','scroll'].forEach(ev=>{
   document.addEventListener(ev,()=>{if(currentUid)resetInactivityTimer();},{passive:true});
 });
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── LOGO ─────────────────────────────────────────────────────────────────────
+function applyLogo(src){
+  studioLogo=src||null;
+  // Auth screen
+  const authImg=document.getElementById('auth-logo-img');
+  const authText=document.getElementById('auth-logo-text');
+  if(src){authImg.src=src;authImg.classList.remove('hidden');authText.classList.add('hidden');}
+  else{authImg.classList.add('hidden');authText.classList.remove('hidden');}
+  // Sidebar
+  const sideImg=document.getElementById('sidebar-logo-img');
+  if(src){sideImg.src=src;sideImg.classList.remove('hidden');}
+  else{sideImg.classList.add('hidden');}
+  // Config page
+  const preview=document.getElementById('logo-preview');
+  const placeholder=document.getElementById('logo-placeholder');
+  const removeBtn=document.getElementById('btn-remove-logo');
+  if(src){preview.src=src;preview.classList.remove('hidden');placeholder.classList.add('hidden');removeBtn.classList.remove('hidden');}
+  else{preview.classList.add('hidden');placeholder.classList.remove('hidden');removeBtn.classList.add('hidden');}
+}
+function handleLogoUpload(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=400,canvas=document.createElement('canvas');
+      const scale=Math.min(1,MAX/Math.max(img.width,img.height,1));
+      canvas.width=Math.round(img.width*scale);
+      canvas.height=Math.round(img.height*scale);
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      applyLogo(canvas.toDataURL('image/png'));
+      save();
+      const fb=document.getElementById('logo-feedback');
+      fb.textContent='Logo atualizada com sucesso!';
+      fb.classList.remove('hidden');
+      setTimeout(()=>fb.classList.add('hidden'),2500);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function removeLogo(){
+  applyLogo(null);
+  save();
+  document.getElementById('logo-file-input').value='';
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -1439,9 +1522,9 @@ function excluirLancamento(idx){
   renderFluxo();
 }
 
-const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','plano-detalhe','pagamento-detalhe','notificacoes','exportar'];
-const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano','pagamento-detalhe':'Registro de pagamento',notificacoes:'Notificações',exportar:'Exportar dados'};
-const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar'];
+const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','plano-detalhe','pagamento-detalhe','notificacoes','exportar','configuracoes'];
+const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano','pagamento-detalhe':'Registro de pagamento',notificacoes:'Notificações',exportar:'Exportar dados',configuracoes:'Configurações'};
+const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar','configuracoes'];
 
 function showPage(p){
   pages.forEach(x=>document.getElementById('page-'+x).classList.toggle('hidden',x!==p));
