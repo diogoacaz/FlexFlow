@@ -2,7 +2,7 @@
   "name": "Flex Flow",
   "short_name": "Flex Flow",
   "description": "Gestão do estúdio de Pilates",
-  "start_url": "/",
+  "start_url": "/FlexFlow/",
   "display": "standalone",
   "background_color": "#eeede8",
   "theme_color": "#378ADD",

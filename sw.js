@@ -1,11 +1,11 @@
 const CACHE = 'flexflow-v1';
 const PRECACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/apple-touch-icon.png',
+  '/FlexFlow/',
+  '/FlexFlow/index.html',
+  '/FlexFlow/manifest.json',
+  '/FlexFlow/icons/icon-192.png',
+  '/FlexFlow/icons/icon-512.png',
+  '/FlexFlow/icons/apple-touch-icon.png',
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
