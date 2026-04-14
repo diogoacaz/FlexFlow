@@ -600,6 +600,7 @@
           </div>
           <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;">
             <button class="btn btn-s" id="pagdet-btn-pago" onclick="marcarPagoDetalhe()" style="display:none;">&#10003; Marcar como pago</button>
+            <button class="btn" onclick="openComprovanteModal(currentPagIdx)">Comprovante</button>
             <button class="btn btn-p" onclick="savePagamentoDetalhe()">Salvar alterações</button>
           </div>
         </div>
@@ -645,6 +646,16 @@
           </div>
           <div id="template-feedback" class="hidden feedback" style="margin-top:10px;background:var(--bg-success);color:var(--text-success);"></div>
         </div>
+        <div class="card" style="max-width:460px;margin-top:20px;">
+          <div class="sec-title" style="margin-bottom:6px;">Comprovante de pagamento</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Placeholders disponíveis: <strong>{{nome}}</strong>, <strong>{{plano}}</strong>, <strong>{{valor}}</strong>, <strong>{{vencimento}}</strong>, <strong>{{data_pagamento}}</strong>, <strong>{{forma}}</strong>, <strong>{{status}}</strong>.</div>
+          <textarea id="comprovante-template-input" class="fi" style="height:260px;resize:vertical;font-size:13px;line-height:1.75;font-family:var(--font);"></textarea>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn btn-p" onclick="saveComprovanteTemplate()">Salvar template</button>
+            <button class="btn" onclick="resetComprovanteTemplate()">Restaurar padrão</button>
+          </div>
+          <div id="comprovante-feedback" class="hidden feedback" style="margin-top:10px;background:var(--bg-success);color:var(--text-success);"></div>
+        </div>
       </div>
 
     </div>
@@ -659,6 +670,18 @@
 </div>
 
 <!-- MODAIS -->
+<div class="overlay" id="modal-comprovante">
+  <div class="modal" style="width:560px;">
+    <div class="modal-title" id="modal-comprovante-title">Comprovante de pagamento</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Edite o texto abaixo antes de exportar. As alterações aqui não afetam o template padrão.</div>
+    <textarea id="modal-comprovante-text" class="fi" style="height:320px;resize:vertical;font-size:13px;line-height:1.75;font-family:var(--font);"></textarea>
+    <div class="ma" style="margin-top:16px;">
+      <button class="btn" onclick="closeModal('modal-comprovante')">Fechar</button>
+      <button class="btn btn-p" onclick="exportComprovantePDF()">Exportar PDF</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="modal-matricula">
   <div class="modal" style="width:560px;">
     <div class="modal-title" id="modal-matricula-title">Texto de matrícula</div>
@@ -873,7 +896,8 @@ const auth=firebase.auth();
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_MATRICULA_TEMPLATE=`Bem-vindo(a) ao estúdio, {{nome}}!\n\nÉ com muita alegria que recebemos você em nossa equipe. Aqui você encontrará um espaço acolhedor e profissional, dedicado ao seu bem-estar através do Método Pilates.\n\nORIENTAÇÕES:\n\n• Pontualidade: Chegue com 5 minutos de antecedência. Atrasos poderão encurtar o tempo da sua aula.\n\n• Vestimenta: Use roupas confortáveis e meia antiderrapante — obrigatória nas aulas de aparelho.\n\n• Cancelamentos: Cancele com no mínimo 12 horas de antecedência para que a aula não seja descontada.\n\n• Saúde: Informe sempre ao instrutor sobre dores, lesões, cirurgias recentes ou qualquer condição de saúde.\n\n• Mensalidade: O vencimento da sua mensalidade é todo dia {{dia}} de cada mês. Em caso de dúvidas sobre pagamentos, fale conosco.\n\n• Ambiente: Mantenha o celular no silencioso durante as aulas e preserve o bem-estar dos demais alunos.\n\nEstamos aqui para cuidar de você. Qualquer dúvida, estamos à disposição!\n\nCom carinho,\nEquipe Flex Flow`;
-let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null, studioLogo=null, matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE;
+const DEFAULT_COMPROVANTE_TEMPLATE=`COMPROVANTE DE PAGAMENTO\n\nAluno: {{nome}}\nPlano: {{plano}}\nValor: {{valor}}\nVencimento: {{vencimento}}\nData de pagamento: {{data_pagamento}}\nForma de pagamento: {{forma}}\nStatus: {{status}}\n\nConfirmamos o recebimento do pagamento referente à mensalidade do(a) aluno(a) acima identificado(a).\n\nEste documento serve como comprovante oficial de pagamento e dispensa a emissão de qualquer outro recibo.\n\nAtenciosamente,\nEquipe Flex Flow`;
+let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null, studioLogo=null, matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE, comprovanteTemplate=DEFAULT_COMPROVANTE_TEMPLATE;
 
 function save(){
   if(!currentUid)return;
@@ -887,7 +911,7 @@ function save(){
   else localStorage.removeItem('ff_logo_'+currentUid);
   // Sync to Firebase (fire-and-forget)
   db.collection('users').doc(currentUid)
-    .set({alunos,pagamentos,fluxo,professores,planos,studioLogo:studioLogo||null,matriculaTemplate})
+    .set({alunos,pagamentos,fluxo,professores,planos,studioLogo:studioLogo||null,matriculaTemplate,comprovanteTemplate})
     .catch(e=>console.warn('Firebase sync error:',e));
 }
 
@@ -961,6 +985,7 @@ async function startSession(email,uid){
       planos=d.planos||defaultPlanos;
       studioLogo=d.studioLogo||null;
       matriculaTemplate=d.matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
+      comprovanteTemplate=d.comprovanteTemplate||DEFAULT_COMPROVANTE_TEMPLATE;
     } else {
       // Migration: try old email-local-part-keyed doc (legacy)
       const oldDoc=await db.collection('users').doc(email.split('@')[0]).get();
@@ -973,6 +998,7 @@ async function startSession(email,uid){
         planos=d.planos||defaultPlanos;
         studioLogo=d.studioLogo||null;
         matriculaTemplate=d.matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
+        comprovanteTemplate=d.comprovanteTemplate||DEFAULT_COMPROVANTE_TEMPLATE;
       } else {
         // Fall back to localStorage
         alunos=JSON.parse(localStorage.getItem('ff_alunos_'+uid)||'null')||defaultAlunos;
@@ -982,6 +1008,7 @@ async function startSession(email,uid){
         planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
         studioLogo=localStorage.getItem('ff_logo_'+uid)||null;
         matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE;
+        comprovanteTemplate=DEFAULT_COMPROVANTE_TEMPLATE;
       }
       save(); // upload to uid-keyed doc
     }
@@ -1101,6 +1128,55 @@ function removeLogo(){
   applyLogo(null);
   save();
   document.getElementById('logo-file-input').value='';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── COMPROVANTE ──────────────────────────────────────────────────────────────
+function openComprovanteModal(idx){
+  const p=pagamentos[idx];
+  const statusLabel=p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado';
+  const dataPag=p.dataPagRaw?new Date(p.dataPagRaw+'T00:00:00').toLocaleDateString('pt-BR'):'—';
+  const texto=(comprovanteTemplate||DEFAULT_COMPROVANTE_TEMPLATE)
+    .replace(/\{\{nome\}\}/g,p.aluno||'—')
+    .replace(/\{\{plano\}\}/g,p.plano||'—')
+    .replace(/\{\{valor\}\}/g,p.valor||'—')
+    .replace(/\{\{vencimento\}\}/g,p.venc||'—')
+    .replace(/\{\{data_pagamento\}\}/g,dataPag)
+    .replace(/\{\{forma\}\}/g,p.forma||'—')
+    .replace(/\{\{status\}\}/g,statusLabel);
+  document.getElementById('modal-comprovante-title').textContent='Comprovante — '+p.aluno;
+  document.getElementById('modal-comprovante-text').value=texto;
+  openModal('modal-comprovante');
+}
+function saveComprovanteTemplate(){
+  comprovanteTemplate=document.getElementById('comprovante-template-input').value;
+  save();
+  const fb=document.getElementById('comprovante-feedback');
+  fb.textContent='Template salvo com sucesso!';
+  fb.classList.remove('hidden');
+  setTimeout(()=>fb.classList.add('hidden'),2000);
+}
+function resetComprovanteTemplate(){
+  comprovanteTemplate=DEFAULT_COMPROVANTE_TEMPLATE;
+  document.getElementById('comprovante-template-input').value=DEFAULT_COMPROVANTE_TEMPLATE;
+  save();
+}
+function exportComprovantePDF(){
+  const text=document.getElementById('modal-comprovante-text').value;
+  const title=document.getElementById('modal-comprovante-title').textContent;
+  const alunoNome=title.replace('Comprovante — ','');
+  const logoEl=document.getElementById('print-logo');
+  if(studioLogo){
+    logoEl.innerHTML=`<img src="${studioLogo}" style="height:68px;object-fit:contain;border-radius:10px;display:block;margin-bottom:16px;">`;
+  } else {
+    logoEl.innerHTML=`<div style="font-size:22px;font-weight:700;margin-bottom:4px;">Flex Flow</div><div style="font-size:12px;color:#888;margin-bottom:16px;">Gestão do estúdio</div>`;
+  }
+  document.getElementById('print-content').textContent=text;
+  document.getElementById('print-footer').textContent='Documento gerado para '+alunoNome+' · '+new Date().toLocaleDateString('pt-BR');
+  const printArea=document.getElementById('print-area');
+  printArea.style.display='block';
+  window.print();
+  printArea.style.display='none';
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1631,7 +1707,10 @@ function showPage(p){
   if(p==='pagamentos')filterPag(currentPagFilter);
   if(p==='fluxo')renderFluxo();
   if(p==='notificacoes')renderNotificacoes();
-  if(p==='configuracoes')document.getElementById('matricula-template-input').value=matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
+  if(p==='configuracoes'){
+    document.getElementById('matricula-template-input').value=matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
+    document.getElementById('comprovante-template-input').value=comprovanteTemplate||DEFAULT_COMPROVANTE_TEMPLATE;
+  }
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
