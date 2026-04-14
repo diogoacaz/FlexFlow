@@ -1175,8 +1175,39 @@ function marcarPago(idx){
   updateDashboard();
 }
 
+function ensureMensalidadesDoMes(mesIdx,anoIdx){
+  const mesRef=new Date(anoIdx,mesIdx,1);
+  let changed=false;
+  alunos.filter(a=>a.ativo!==false).forEach(a=>{
+    // Determine billing day: prefer diaVencimento, fallback to venc day, then 1
+    let dia=a.diaVencimento||null;
+    if(!dia&&a.venc&&a.venc!=='—'){const p=a.venc.split('/');if(p.length>=1)dia=parseInt(p[0])||1;}
+    if(!dia)dia=1;
+    // Only generate for months on/after enrollment
+    if(a.inicio){
+      const enrollRef=new Date(a.inicio+'T00:00:00');
+      if(new Date(enrollRef.getFullYear(),enrollRef.getMonth(),1)>mesRef)return;
+    }
+    // Check if a record already exists for this student in this month
+    const jaExiste=pagamentos.some(p=>{
+      if(p.aluno!==a.nome||!p.venc||p.venc==='—')return false;
+      const parts=p.venc.split('/');
+      return parts.length>=2&&parseInt(parts[1])-1===mesIdx;
+    });
+    if(!jaExiste){
+      const venc=String(dia).padStart(2,'0')+'/'+String(mesIdx+1).padStart(2,'0');
+      const valor=getPlanoPreco(a.plano);
+      pagamentos.push({aluno:a.nome,plano:a.plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
+      changed=true;
+    }
+  });
+  if(changed)save();
+  return changed;
+}
+
 function filterPag(f,btn){
   currentPagFilter=f;
+  ensureMensalidadesDoMes(currentPagMes,currentPagAno);
   document.querySelectorAll('#page-pagamentos .tab-btn').forEach(b=>{
     b.classList.toggle('active', btn ? b===btn : b.textContent.trim().toLowerCase()===({todos:'todos',pago:'pagos',pendente:'pendentes',atrasado:'atrasados'}[f]||f));
   });
@@ -1330,13 +1361,14 @@ function addAluno(){
   const partes=nome.split(' ');
   const ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
   let venc='—';
+  let diaVencimento=1;
   if(inicio){
     const d=new Date(inicio+'T00:00:00');
-    d.setMonth(d.getMonth()+1);
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    diaVencimento=d.getDate();
   }
   const valor=getPlanoPreco(plano);
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,inicio,hist:[]});
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,inicio,diaVencimento,hist:[]});
   pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
@@ -1387,6 +1419,7 @@ function saveEditAluno(){
   a.plano=document.getElementById('ed-plano').value;
   a.prof=document.getElementById('ed-prof').value;
   a.inicio=document.getElementById('ed-inicio').value;
+  if(a.inicio){a.diaVencimento=new Date(a.inicio+'T00:00:00').getDate();}
   a.ativo=document.getElementById('ed-ativo').value!=='false';
   const partes=nome.split(' ');
   a.ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
@@ -1895,8 +1928,9 @@ function processarArquivoImport(input){
       const partes=nome.trim().split(/\s+/);
       const ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
       let venc='—';
-      if(inicio){try{const d=new Date(inicio+'T00:00:00');if(!isNaN(d)){d.setMonth(d.getMonth()+1);venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}}catch(ee){}}
-      importData.push({nome,ini,cor,plano,prof,venc,status:'pendente',
+      let diaVencimento=1;
+      if(inicio){try{const d=new Date(inicio+'T00:00:00');if(!isNaN(d)){venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});diaVencimento=d.getDate();}}catch(ee){}}
+      importData.push({nome,ini,cor,plano,prof,venc,status:'pendente',diaVencimento,
         tel:(row['Telefone']||row['telefone']||'').trim(),
         cpf:(row['CPF']||row['cpf']||'').trim(),
         email:(row['Email']||row['email']||'').trim(),
