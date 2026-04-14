@@ -534,6 +534,45 @@
         </div>
       </div>
 
+      <!-- FICHA DO PAGAMENTO -->
+      <div id="page-pagamento-detalhe" class="hidden">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+          <button class="btn" onclick="showPage('pagamentos')">&#8592; Voltar</button>
+          <span style="font-size:15px;font-weight:600;" id="pagdet-title">Registro de pagamento</span>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div id="pagdet-av" class="av" style="width:44px;height:44px;font-size:17px;flex-shrink:0;"></div>
+              <div>
+                <div style="font-size:17px;font-weight:600;" id="pagdet-aluno">—</div>
+                <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;" id="pagdet-badges"></div>
+              </div>
+            </div>
+            <button class="btn btn-d" style="font-size:13px;" onclick="excluirPagamentoDetalhe()">Excluir</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="sec-title" style="margin-bottom:16px;">Dados do pagamento</div>
+          <input type="hidden" id="pagdet-idx">
+          <div class="fr2">
+            <div class="fg"><label class="fl">Plano</label><select class="fi" id="pagdet-plano"></select></div>
+            <div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="pagdet-valor" type="number" step="0.01" placeholder="0"></div>
+          </div>
+          <div class="fr2">
+            <div class="fg"><label class="fl">Vencimento</label><input class="fi" id="pagdet-venc" type="date"></div>
+            <div class="fg"><label class="fl">Forma de pagamento</label><select class="fi" id="pagdet-forma"><option>PIX</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Dinheiro</option><option>Transferência</option><option>—</option></select></div>
+          </div>
+          <div class="fr2">
+            <div class="fg"><label class="fl">Status</label><select class="fi" id="pagdet-status"><option value="pendente">Pendente</option><option value="pago">Pago</option><option value="atrasado">Atrasado</option></select></div>
+            <div class="fg"><label class="fl">Data de registro do pagamento</label><input class="fi" id="pagdet-data-pag" type="date"></div>
+          </div>
+          <div style="margin-top:20px;display:flex;justify-content:flex-end;">
+            <button class="btn btn-p" onclick="savePagamentoDetalhe()">Salvar alterações</button>
+          </div>
+        </div>
+      </div>
+
       <!-- EXPORTAR -->
       <div id="page-exportar" class="hidden">
         <div class="card">
@@ -1141,14 +1180,12 @@ function navFluxoMes(dir){
 function renderPagamentos(lista){
   document.getElementById('pagamentos-body').innerHTML=lista.map(p=>{
     const ri=pagamentos.indexOf(p);
-    return `<tr>
+    return `<tr style="cursor:pointer;" onclick="showPagamentoDetalhe(${ri})">
       <td>${p.aluno}</td><td>${p.plano}</td><td>${p.valor}</td><td>${p.venc}</td>
       <td><span class="badge ${p.status==='pago'?'bg':p.status==='pendente'?'ba':'br'}">${p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado'}</span></td>
       <td>${p.forma}</td>
       <td style="white-space:nowrap;">
-        ${p.status!=='pago'?`<button class="btn btn-s" style="font-size:11px;padding:3px 7px;" onclick="marcarPago(${ri})">Pago</button> `:''}
-        <button class="btn" style="font-size:11px;padding:3px 7px;" onclick="editarPagamento(${ri})">Editar</button>
-        <button class="btn btn-d" style="font-size:11px;padding:3px 7px;margin-left:3px;" onclick="excluirPagamento(${ri})">Excluir</button>
+        ${p.status!=='pago'?`<button class="btn btn-s" style="font-size:11px;padding:3px 7px;" onclick="event.stopPropagation();marcarPago(${ri})">Pago</button>`:''}
       </td>
     </tr>`;
   }).join('');
@@ -1316,8 +1353,8 @@ function excluirLancamento(idx){
   renderFluxo();
 }
 
-const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','plano-detalhe','notificacoes','exportar'];
-const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano',notificacoes:'Notificações',exportar:'Exportar dados'};
+const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','plano-detalhe','pagamento-detalhe','notificacoes','exportar'];
+const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano','pagamento-detalhe':'Registro de pagamento',notificacoes:'Notificações',exportar:'Exportar dados'};
 const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar'];
 
 function showPage(p){
@@ -1689,36 +1726,80 @@ function excluirPlano(idx){
   showPage('planos');
 }
 
-// ── PAGAMENTOS EDITAR/EXCLUIR ────────────────────────────────────────────────
-function editarPagamento(idx){
+// ── PAGAMENTO DETALHE ────────────────────────────────────────────────────────
+let currentPagIdx=null;
+
+function showPagamentoDetalhe(idx){
+  currentPagIdx=idx;
   const p=pagamentos[idx];
-  document.getElementById('ep-idx').value=idx;
-  document.getElementById('ep-aluno').value=p.aluno;
-  document.getElementById('ep-plano').value=p.plano;
-  const rawVal=parseValorNum(p.valor);
-  document.getElementById('ep-valor').value=rawVal;
-  document.getElementById('ep-venc').value=p.vencRaw||'';
-  document.getElementById('ep-forma').value=p.forma||'—';
-  document.getElementById('ep-status').value=p.status||'pendente';
-  openModal('modal-editar-pagamento');
+  const a=alunos.find(x=>x.nome===p.aluno);
+  document.getElementById('pagdet-title').textContent='Registro — '+p.aluno;
+  const avEl=document.getElementById('pagdet-av');
+  avEl.className='av '+(a?a.cor:'av-b');
+  avEl.textContent=a?a.ini:p.aluno.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('pagdet-aluno').textContent=p.aluno;
+  const sCls=p.status==='pago'?'bg':p.status==='pendente'?'ba':'br';
+  const sLbl=p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado';
+  document.getElementById('pagdet-badges').innerHTML=
+    `<span class="badge ${sCls}">${sLbl}</span>`+
+    `<span class="badge bb">${p.plano}</span>`+
+    (p.venc&&p.venc!=='—'?`<span style="font-size:12px;color:var(--text-secondary);">Venc. ${p.venc}</span>`:'');
+  document.getElementById('pagdet-idx').value=idx;
+  const planoSel=document.getElementById('pagdet-plano');
+  planoSel.innerHTML=planos.map(pl=>`<option value="${pl.duracao}">${pl.nome} — R$ ${pl.valor.toLocaleString('pt-BR')}</option>`).join('');
+  planoSel.value=p.plano;
+  document.getElementById('pagdet-valor').value=parseValorNum(p.valor)||'';
+  // Derive vencRaw from venc + currentPagAno if not stored
+  let vencRaw=p.vencRaw||'';
+  if(!vencRaw&&p.venc&&p.venc!=='—'){
+    const parts=p.venc.split('/');
+    if(parts.length===2){const d=parts[0].padStart(2,'0'),m=parts[1].padStart(2,'0');vencRaw=`${currentPagAno}-${m}-${d}`;}
+  }
+  document.getElementById('pagdet-venc').value=vencRaw;
+  document.getElementById('pagdet-forma').value=p.forma||'—';
+  document.getElementById('pagdet-status').value=p.status||'pendente';
+  document.getElementById('pagdet-data-pag').value=p.dataPagRaw||'';
+  showPage('pagamento-detalhe');
 }
-function saveEditPagamento(){
-  const idx=parseInt(document.getElementById('ep-idx').value);
-  const valor=parseFloat(document.getElementById('ep-valor').value)||0;
+
+function savePagamentoDetalhe(){
+  const idx=parseInt(document.getElementById('pagdet-idx').value);
+  const valor=parseFloat(document.getElementById('pagdet-valor').value)||0;
   if(!valor){alert('Informe o valor.');return;}
-  const vencRaw=document.getElementById('ep-venc').value;
+  const plano=document.getElementById('pagdet-plano').value;
+  const vencRaw=document.getElementById('pagdet-venc').value;
+  const forma=document.getElementById('pagdet-forma').value;
+  const status=document.getElementById('pagdet-status').value;
+  const dataPagRaw=document.getElementById('pagdet-data-pag').value;
+  const oldStatus=pagamentos[idx].status;
   let venc=pagamentos[idx].venc;
   if(vencRaw){const d=new Date(vencRaw+'T00:00:00');venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
-  const status=document.getElementById('ep-status').value;
-  pagamentos[idx]={...pagamentos[idx],plano:document.getElementById('ep-plano').value.trim(),valor:'R$ '+valor.toLocaleString('pt-BR'),venc,vencRaw,forma:document.getElementById('ep-forma').value,status};
+  pagamentos[idx]={...pagamentos[idx],plano,valor:'R$ '+valor.toLocaleString('pt-BR'),venc,vencRaw,forma,status,dataPagRaw};
   const a=alunos.find(x=>x.nome===pagamentos[idx].aluno);
   if(a){a.status=status;a.venc=venc;}
+  // Sync to fluxo when newly marked as paid
+  if(status==='pago'&&oldStatus!=='pago'){
+    const dataRawFinal=dataPagRaw||new Date().toISOString().split('T')[0];
+    const dataFmt=new Date(dataRawFinal+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    if(a)a.hist.push({mes:MES[new Date(dataRawFinal+'T00:00:00').getMonth()],val:'R$ '+valor.toLocaleString('pt-BR'),forma,st:'pago'});
+    fluxo.unshift({desc:'Mensalidade — '+pagamentos[idx].aluno,tipo:'income',valor:'+R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:dataRawFinal});
+  }
   save();filterPag(currentPagFilter);renderAlunos(alunos);renderNotificacoes();updateDashboard();
-  closeModal('modal-editar-pagamento');
+  showPagamentoDetalhe(idx);
 }
+
+function excluirPagamentoDetalhe(){
+  if(!confirm('Excluir este pagamento?\nEsta ação não pode ser desfeita.'))return;
+  pagamentos.splice(currentPagIdx,1);
+  currentPagIdx=null;
+  save();filterPag(currentPagFilter);updateDashboard();
+  showPage('pagamentos');
+}
+
 function excluirPagamento(idx){
   if(!confirm('Excluir este pagamento?\nEsta ação não pode ser desfeita.'))return;
   pagamentos.splice(idx,1);save();filterPag(currentPagFilter);updateDashboard();
+  renderNotificacoes();
 }
 
 // ── NOTIFICAÇÕES ──────────────────────────────────────────────────────────────
