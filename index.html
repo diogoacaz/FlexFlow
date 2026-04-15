@@ -962,12 +962,19 @@ async function sendPasswordReset(){
   errEl.classList.add('hidden'); okEl.classList.add('hidden');
   if(!email){errEl.textContent='Informe o e-mail.';errEl.classList.remove('hidden');return;}
   try {
+    // Verifica se o e-mail está cadastrado antes de enviar
+    const methods=await auth.fetchSignInMethodsForEmail(email);
+    if(!methods||methods.length===0){
+      errEl.textContent='E-mail não cadastrado.';
+      errEl.classList.remove('hidden');
+      return;
+    }
     await auth.sendPasswordResetEmail(email);
     okEl.textContent='Link enviado para '+email+'. Verifique sua caixa de entrada.';
     okEl.classList.remove('hidden');
     setTimeout(()=>backToLogin(),4000);
   } catch(e){
-    errEl.textContent=e.code==='auth/user-not-found'?'E-mail não encontrado.':'Erro: '+e.message;
+    errEl.textContent=e.code==='auth/user-not-found'?'E-mail não cadastrado.':'Erro: '+e.message;
     errEl.classList.remove('hidden');
   }
 }
@@ -1098,7 +1105,9 @@ function applyLogo(src){
   const authText=document.getElementById('auth-logo-text');
   if(src){authImg.src=src;authImg.classList.remove('hidden');authText.classList.add('hidden');}
   else{authImg.classList.add('hidden');authText.classList.remove('hidden');}
-  // Sidebar
+  // Persiste logo para exibir na tela de login mesmo sem estar logado
+  if(src)localStorage.setItem('ff_studio_logo',src);
+  else localStorage.removeItem('ff_studio_logo');  // Sidebar
   const sideImg=document.getElementById('sidebar-logo-img');
   if(src){sideImg.src=src;sideImg.classList.remove('hidden');}
   else{sideImg.classList.add('hidden');}
@@ -2451,6 +2460,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     sessionStorage.removeItem('ff_inactive');
     setAuthErr('auth-err','Sessão encerrada por inatividade. Faça login novamente.');
   }
+  // Exibe logo na tela de login antes mesmo de estar logado
+  const cachedLogo=localStorage.getItem('ff_studio_logo');
+  if(cachedLogo)applyLogo(cachedLogo);
   // Enter key shortcut for login form
   document.getElementById('au-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   // Dashboard charts (always built, data loaded after login)
