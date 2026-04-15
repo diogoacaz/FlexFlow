@@ -67,7 +67,7 @@
   .ni:hover { background: var(--bg-secondary); color: var(--text-primary); }
   .ni.active { background: var(--bg-info); color: var(--text-info); font-weight: 600; }
   .ni-icon { font-size: 15px; width: 18px; text-align: center; }
-  .notif-dot { width: 7px; height: 7px; background: #e24b4a; border-radius: 50%; margin-left: auto; flex-shrink: 0; }
+  .notif-dot { width: 7px; height: 7px; background: #e24b4a; border-radius: 50%; margin-left: auto; flex-shrink: 0; display: none; }
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
   .topbar { padding: 14px 24px; background: var(--bg-primary); border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .page-title { font-size: 16px; font-weight: 600; }
@@ -883,16 +883,20 @@ const defaultPagamentos=[
   {aluno:'Ricardo Alves',plano:'Mensal',valor:'R$ 350',venc:'20/06',status:'pago',forma:'PIX'},
   {aluno:'Juliana Castro',plano:'Trimestral',valor:'R$ 900',venc:'13/06',status:'pendente',forma:'—'},
 ];
+// Helper to generate relative dates for default data (so charts always show recent months)
+const _dNow=new Date();
+function _dRaw(mo,d){const t=new Date(_dNow.getFullYear(),_dNow.getMonth()-mo,d);return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+function _dFmt(mo,d){const t=new Date(_dNow.getFullYear(),_dNow.getMonth()-mo,d);return String(t.getDate()).padStart(2,'0')+'/'+String(t.getMonth()+1).padStart(2,'0');}
 const defaultFluxo=[
-  {desc:'Mensalidades — Ana Lima, Beatriz, Ricardo',tipo:'income',valor:'+R$ 1.050',data:'02/05',dataRaw:'2025-05-02'},
-  {desc:'Mensalidade — Fernanda Costa (semestral)',tipo:'income',valor:'+R$ 1.800',data:'01/05',dataRaw:'2025-05-01'},
-  {desc:'Aluguel do estúdio',tipo:'expense',valor:'-R$ 3.200',data:'05/05',dataRaw:'2025-05-05'},
-  {desc:'Salários dos professores',tipo:'expense',valor:'-R$ 4.000',data:'05/05',dataRaw:'2025-05-05'},
-  {desc:'Mensalidade — Carlos Souza',tipo:'income',valor:'+R$ 900',data:'08/05',dataRaw:'2025-05-08'},
-  {desc:'Equipamentos — bolas e faixas',tipo:'expense',valor:'-R$ 350',data:'10/05',dataRaw:'2025-05-10'},
-  {desc:'Mensalidades em lote — 8 alunos',tipo:'income',valor:'+R$ 2.800',data:'12/05',dataRaw:'2025-05-12'},
-  {desc:'Energia elétrica',tipo:'expense',valor:'-R$ 250',data:'15/05',dataRaw:'2025-05-15'},
-  {desc:'Mensalidades em lote — 7 alunos',tipo:'income',valor:'+R$ 7.650',data:'18/05',dataRaw:'2025-05-18'},
+  {desc:'Mensalidades — Ana Lima, Beatriz, Ricardo',tipo:'income',valor:'+R$ 1.050',data:_dFmt(2,2),dataRaw:_dRaw(2,2)},
+  {desc:'Mensalidade — Fernanda Costa (semestral)',tipo:'income',valor:'+R$ 1.800',data:_dFmt(2,1),dataRaw:_dRaw(2,1)},
+  {desc:'Aluguel do estúdio',tipo:'expense',valor:'-R$ 3.200',data:_dFmt(2,5),dataRaw:_dRaw(2,5)},
+  {desc:'Salários dos professores',tipo:'expense',valor:'-R$ 4.000',data:_dFmt(2,5),dataRaw:_dRaw(2,5)},
+  {desc:'Mensalidade — Carlos Souza',tipo:'income',valor:'+R$ 900',data:_dFmt(1,8),dataRaw:_dRaw(1,8)},
+  {desc:'Equipamentos — bolas e faixas',tipo:'expense',valor:'-R$ 350',data:_dFmt(1,10),dataRaw:_dRaw(1,10)},
+  {desc:'Mensalidades em lote — 8 alunos',tipo:'income',valor:'+R$ 2.800',data:_dFmt(1,12),dataRaw:_dRaw(1,12)},
+  {desc:'Energia elétrica',tipo:'expense',valor:'-R$ 250',data:_dFmt(0,5),dataRaw:_dRaw(0,5)},
+  {desc:'Mensalidades em lote — 7 alunos',tipo:'income',valor:'+R$ 7.650',data:_dFmt(0,12),dataRaw:_dRaw(0,12)},
 ];
 
 const defaultProfessores=[
@@ -2347,10 +2351,10 @@ function buildRelatorioCharts(){
   setClass('rel-saldo-ano','mc-val '+(saldoAno>=0?'green':'red'));
   setEl('rel-saldo-ano-sub',saldoAno>=0?'Positivo':'Negativo');
   const labels=[],recData=[],despData=[];
-  for(let i=5;i>=0;i--){
+  for(let i=11;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     const m=d.getMonth(),y=d.getFullYear();
-    labels.push(MES[m]);
+    labels.push(MES[m]+(y!==anoAtual?'/'+String(y).slice(2):''));
     let rec=0,desp=0;
     fluxo.forEach(f=>{
       if(!f.dataRaw)return;
