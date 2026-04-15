@@ -924,9 +924,16 @@ const defaultProfessores=[
   {nome:'Rafael Duarte',esp:'Instrutor · Pilates funcional e esportivo',tel:'',status:'Férias'},
 ];
 const defaultPlanos=[
-  {nome:'Plano mensal',valor:350,duracao:'Mensal',aulasSemanais:2,desc:'2x por semana · 8 aulas/mês\nSem fidelidade'},
-  {nome:'Plano trimestral',valor:900,duracao:'Trimestral',aulasSemanais:2,desc:'2x por semana · 24 aulas\nEconomia de R$ 150'},
-  {nome:'Plano semestral',valor:1800,duracao:'Semestral',aulasSemanais:3,desc:'3x por semana · 72 aulas\nEconomia de R$ 300'},
+  {nome:'1x por semana',valor:250,duracao:'1x Mensal',aulasSemanais:1,desc:'1x por semana · 4 aulas/mês'},
+  {nome:'2x por semana',valor:310,duracao:'2x Mensal',aulasSemanais:2,desc:'2x por semana · 8 aulas/mês'},
+  {nome:'3x por semana',valor:380,duracao:'3x Mensal',aulasSemanais:3,desc:'3x por semana · 12 aulas/mês'},
+  {nome:'4x por semana',valor:440,duracao:'4x Mensal',aulasSemanais:4,desc:'4x por semana · 16 aulas/mês'},
+  {nome:'5x por semana',valor:500,duracao:'5x Mensal',aulasSemanais:5,desc:'5x por semana · 20 aulas/mês'},
+  {nome:'1x por semana',valor:690,duracao:'1x Trimestral',aulasSemanais:1,desc:'1x por semana · R$ 230/mês\nEconomia de R$ 60 no trimestre'},
+  {nome:'2x por semana',valor:870,duracao:'2x Trimestral',aulasSemanais:2,desc:'2x por semana · R$ 290/mês\nEconomia de R$ 60 no trimestre'},
+  {nome:'3x por semana',valor:1080,duracao:'3x Trimestral',aulasSemanais:3,desc:'3x por semana · R$ 360/mês\nEconomia de R$ 60 no trimestre'},
+  {nome:'4x por semana',valor:1260,duracao:'4x Trimestral',aulasSemanais:4,desc:'4x por semana · R$ 420/mês\nEconomia de R$ 60 no trimestre'},
+  {nome:'5x por semana',valor:1440,duracao:'5x Trimestral',aulasSemanais:5,desc:'5x por semana · R$ 480/mês\nEconomia de R$ 60 no trimestre'},
 ];
 
 // ── FIREBASE ──────────────────────────────────────────────────────────────────
@@ -1076,6 +1083,8 @@ async function startSession(email,uid){
     planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
     studioLogo=localStorage.getItem('ff_logo_'+uid)||null;
   }
+  // Migração: substitui planos demo antigos pelos novos
+  if(planos.length<=3&&planos.every(p=>['Mensal','Trimestral','Semestral'].includes(p.duracao)))planos=defaultPlanos;
   applyLogo(studioLogo);
   document.getElementById('sync-overlay').style.display='none';
   renderProfessores();
@@ -2069,7 +2078,7 @@ let repMes=new Date().getMonth(), repAno=new Date().getFullYear();
 function getValorMensalPlano(duracao){
   const p=planos.find(x=>x.duracao===duracao);
   if(!p)return 350;
-  const meses={Mensal:1,Trimestral:3,Semestral:6,Anual:12}[p.duracao]||1;
+  const meses=p.duracao.includes('Trimestral')?3:p.duracao.includes('Semestral')?6:p.duracao.includes('Anual')?12:1;
   return p.valor/meses;
 }
 
@@ -2146,7 +2155,7 @@ let currentPlanoIdx=null;
 function showPlanoDetalhe(idx){
   currentPlanoIdx=idx;
   const p=planos[idx];
-  const duracaoLabel={'Mensal':'/mês','Trimestral':'/3 meses','Semestral':'/6 meses','Anual':'/ano'}[p.duracao]||'';
+  const duracaoLabel=p.duracao.includes('Trimestral')?'/trim.':p.duracao.includes('Semestral')?'/sem.':p.duracao.includes('Anual')?'/ano':'/mês';
   document.getElementById('pldet-nome-title').textContent=p.nome;
   document.getElementById('pldet-nome').textContent=p.nome;
   document.getElementById('pldet-valor').innerHTML=`R$ ${p.valor.toLocaleString('pt-BR')}<span style="font-size:14px;font-weight:400;color:var(--text-secondary);">${duracaoLabel}</span>`;
@@ -2181,7 +2190,7 @@ function renderPlanos(){
   const grid=document.getElementById('planos-grid');
   if(!grid)return;
   grid.innerHTML=planos.map((p,i)=>{
-    const duracaoLabel={'Mensal':'/mês','Trimestral':'/3 meses','Semestral':'/6 meses','Anual':'/ano'}[p.duracao]||'';
+    const duracaoLabel=p.duracao.includes('Trimestral')?'/trim.':p.duracao.includes('Semestral')?'/sem.':p.duracao.includes('Anual')?'/ano':'/mês';
     const alunosCount=alunos.filter(a=>a.plano===p.duracao).length;
     return `<div class="card" style="cursor:pointer;${i===0?'border:2px solid #378add;':''}" onclick="showPlanoDetalhe(${i})">
       ${i===0?'<div class="badge bb" style="margin-bottom:10px;">Mais popular</div>':''}
