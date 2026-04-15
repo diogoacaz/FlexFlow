@@ -446,7 +446,7 @@
             <div style="position:relative;width:100%;height:200px;"><canvas id="chart-receita"></canvas></div>
           </div>
           <div class="card">
-            <div class="sec-title">Receita vs Despesa — últimos 6 meses</div>
+            <div class="sec-title">Receita vs Despesa — últimos 12 meses</div>
             <div style="position:relative;width:100%;height:200px;"><canvas id="chart-alunos-mes"></canvas></div>
           </div>
         </div>
@@ -2370,7 +2370,9 @@ function buildRelatorioCharts(){
   const c2=document.getElementById('chart-alunos-mes');
   const c3=document.getElementById('chart-prof');
   if(c1)relChart1=new Chart(c1,{type:'line',data:{labels,datasets:[{label:'Receita',data:recData,borderColor:'#1D9E75',backgroundColor:'rgba(29,158,117,0.07)',fill:true,tension:0.35,pointRadius:4,pointBackgroundColor:'#1D9E75'}]},options:bOpts});
-  if(c2)relChart2=new Chart(c2,{type:'bar',data:{labels,datasets:[{label:'Receita',data:recData,backgroundColor:'rgba(29,158,117,0.7)',borderRadius:3},{label:'Despesa',data:despData,backgroundColor:'rgba(226,75,74,0.7)',borderRadius:3}]},options:{...bOpts,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:12}}}}});
+  const negDesp=despData.map(v=>v>0?-v:0);
+  const rvdOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:12}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'rgba(128,128,128,0.1)'},ticks:{font:{size:11},callback:v=>{const a=Math.abs(v);return(v<0?'-':'')+'R$'+(a>=1000?Math.round(a/1000)+'k':Math.round(a));}}}}};
+  if(c2)relChart2=new Chart(c2,{type:'bar',data:{labels,datasets:[{label:'Receita',data:recData,backgroundColor:'rgba(29,158,117,0.7)',borderRadius:3},{label:'Despesa',data:negDesp,backgroundColor:'rgba(226,75,74,0.7)',borderRadius:3}]},options:rvdOpts});
   const profLabels=professores.map(p=>p.nome);
   const profData=professores.map(p=>alunos.filter(a=>a.prof===p.nome&&a.ativo!==false).length);
   const profCores=['#378ADD','#1D9E75','#7F77DD','#F5A623','#E24B4A','#888780'];
