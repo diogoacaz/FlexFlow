@@ -39,6 +39,23 @@
     --radius-lg: 12px;
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
+  [data-theme="dark"] {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #272727;
+    --bg-tertiary: #141414;
+    --bg-info: #0d2d4a;
+    --bg-success: #0d2a0d;
+    --bg-warning: #2a1a05;
+    --bg-danger: #2a0d0d;
+    --text-primary: #eeedea;
+    --text-secondary: #9a9892;
+    --text-info: #5aacf5;
+    --text-success: #7acc4a;
+    --text-warning: #f5a833;
+    --text-danger: #f56a6a;
+    --border: rgba(255,255,255,0.10);
+    --border-md: rgba(255,255,255,0.20);
+  }
   body { font-family: var(--font); background: var(--bg-tertiary); color: var(--text-primary); height: 100vh; display: flex; flex-direction: column; }
   .app { display: flex; flex: 1; overflow: hidden; }
   .sidebar { width: 210px; background: var(--bg-primary); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
@@ -273,6 +290,7 @@
       <div class="topbar-actions">
         <button class="btn btn-w" onclick="showPage('notificacoes')" style="font-size:12px;" id="topbar-alertas-btn">0 alertas</button>
         <button class="btn btn-p" onclick="showPage('exportar')">Exportar dados</button>
+        <button class="btn" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema" style="font-size:16px;padding:5px 9px;line-height:1;">🌙</button>
         <span id="user-badge" style="font-size:12px;color:var(--text-secondary);border-left:0.5px solid var(--border);padding-left:12px;margin-left:4px;"></span>
         <button class="btn btn-d" onclick="logout()" style="font-size:12px;">Sair</button>
       </div>
@@ -2460,6 +2478,8 @@ window.addEventListener('DOMContentLoaded',()=>{
     sessionStorage.removeItem('ff_inactive');
     setAuthErr('auth-err','Sessão encerrada por inatividade. Faça login novamente.');
   }
+  // Aplica tema salvo (antes de qualquer renderização)
+  applyTheme(localStorage.getItem('ff_theme')||'light');
   // Exibe logo na tela de login antes mesmo de estar logado
   const cachedLogo=localStorage.getItem('ff_studio_logo');
   if(cachedLogo)applyLogo(cachedLogo);
@@ -2476,6 +2496,20 @@ window.addEventListener('DOMContentLoaded',()=>{
     // If no user, auth screen stays visible (CSS default)
   });
 });
+
+// ── TEMA ─────────────────────────────────────────────────────────────────────
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme',theme);
+  const btn=document.getElementById('theme-toggle');
+  if(btn)btn.textContent=theme==='dark'?'☀':'🌙';
+}
+function toggleTheme(){
+  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+  const next=isDark?'light':'dark';
+  applyTheme(next);
+  localStorage.setItem('ff_theme',next);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── SERVICE WORKER (PWA) ─────────────────────────────────────────────────────
 if('serviceWorker' in navigator){
