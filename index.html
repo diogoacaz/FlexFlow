@@ -364,7 +364,7 @@
       <!-- PROFESSORES -->
       <div id="page-professores" class="hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <button class="btn" onclick="showRepasses()">Repasses</button>
+          <button class="btn btn-w" onclick="showRepasses()">Repasses</button>
           <button class="btn btn-p" onclick="openModal('modal-professor')">+ Novo professor</button>
         </div>
         <div class="g2" id="professores-grid"></div>
@@ -1776,8 +1776,8 @@ function excluirLancamento(idx){
   renderFluxo();
 }
 
-const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','plano-detalhe','pagamento-detalhe','notificacoes','exportar','configuracoes'];
-const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano','pagamento-detalhe':'Registro de pagamento',notificacoes:'Notificações',exportar:'Exportar dados',configuracoes:'Configurações'};
+const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','historico','aluno-detalhe','professor-detalhe','plano-detalhe','pagamento-detalhe','notificacoes','exportar','configuracoes','repasses'];
+const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano','pagamento-detalhe':'Registro de pagamento',notificacoes:'Notificações',exportar:'Exportar dados',configuracoes:'Configurações',repasses:'Repasses'};
 const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar','configuracoes'];
 
 function showPage(p){
