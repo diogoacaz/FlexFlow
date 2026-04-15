@@ -134,6 +134,11 @@
   .overlay.open { display: flex; }
   .modal { background: var(--bg-primary); border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 24px; width: 430px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
   .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+  .tgl-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;}
+  .tgl{appearance:none;-webkit-appearance:none;width:40px;height:22px;background:var(--border-md);border-radius:11px;cursor:pointer;transition:.2s;flex-shrink:0;position:relative;}
+  .tgl:checked{background:#378ADD;}
+  .tgl::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .tgl:checked::after{left:21px;}
   .fg { margin-bottom: 13px; }
   .fl { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; display: block; font-weight: 500; }
   .fi { width: 100%; padding: 8px 11px; border: 0.5px solid var(--border-md); border-radius: var(--radius-md); font-size: 13px; background: var(--bg-primary); color: var(--text-primary); font-family: var(--font); outline: none; }
@@ -807,6 +812,7 @@
     <div class="fr2"><div class="fg"><label class="fl">Nome do plano</label><input class="fi" id="pl-nome" placeholder="Ex: Plano anual"></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="pl-valor" type="number" placeholder="0"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Duração</label><select class="fi" id="pl-dur"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div class="fg"><label class="fl">Aulas/semana</label><input class="fi" id="pl-aulas" type="number" placeholder="2"></div></div>
     <div class="fg"><label class="fl">Descrição (opcional)</label><input class="fi" id="pl-desc" placeholder="Ex: 2x por semana · Sem fidelidade"></div>
+    <div class="tgl-row"><label class="fl">Mais popular</label><input type="checkbox" class="tgl" id="pl-popular"></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-plano')">Cancelar</button><button class="btn btn-p" onclick="addPlano()">Criar plano</button></div>
   </div>
 </div>
@@ -818,6 +824,7 @@
     <div class="fr2"><div class="fg"><label class="fl">Nome do plano</label><input class="fi" id="epl-nome" placeholder="Ex: Plano anual"></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="epl-valor" type="number" placeholder="0"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Duração</label><select class="fi" id="epl-dur"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div class="fg"><label class="fl">Aulas/semana</label><input class="fi" id="epl-aulas" type="number" placeholder="2"></div></div>
     <div class="fg"><label class="fl">Descrição (opcional)</label><input class="fi" id="epl-desc" placeholder="Ex: 2x por semana · Sem fidelidade"></div>
+    <div class="tgl-row"><label class="fl">Mais popular</label><input type="checkbox" class="tgl" id="epl-popular"></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-plano')">Cancelar</button><button class="btn btn-p" onclick="saveEditPlano()">Salvar alterações</button></div>
   </div>
 </div>
@@ -2192,8 +2199,8 @@ function renderPlanos(){
   grid.innerHTML=planos.map((p,i)=>{
     const duracaoLabel=p.duracao.includes('Trimestral')?'/trim.':p.duracao.includes('Semestral')?'/sem.':p.duracao.includes('Anual')?'/ano':'/mês';
     const alunosCount=alunos.filter(a=>a.plano===p.duracao).length;
-    return `<div class="card" style="cursor:pointer;${i===0?'border:2px solid #378add;':''}" onclick="showPlanoDetalhe(${i})">
-      ${i===0?'<div class="badge bb" style="margin-bottom:10px;">Mais popular</div>':''}
+    return `<div class="card" style="cursor:pointer;${p.popular?'border:2px solid #378add;':''}" onclick="showPlanoDetalhe(${i})">
+      ${p.popular?'<div class="badge bb" style="margin-bottom:10px;">Mais popular</div>':''}
       <div style="font-size:15px;font-weight:600;margin-bottom:4px;">${p.nome}</div>
       <div style="font-size:22px;font-weight:600;margin-bottom:8px;">R$ ${p.valor.toLocaleString('pt-BR')}<span style="font-size:13px;font-weight:400;color:var(--text-secondary);">${duracaoLabel}</span></div>
       <hr class="divider">
@@ -2210,10 +2217,13 @@ function addPlano(){
   const duracao=document.getElementById('pl-dur').value;
   const aulasSemanais=parseInt(document.getElementById('pl-aulas').value)||0;
   const desc=document.getElementById('pl-desc').value.trim();
+  const popular=document.getElementById('pl-popular').checked;
   if(!nome||!valor){alert('Informe nome e valor do plano.');return;}
-  planos.push({nome,valor,duracao,aulasSemanais,desc});
+  if(popular)planos.forEach(p=>p.popular=false);
+  planos.push({nome,valor,duracao,aulasSemanais,desc,popular});
   save();renderPlanos();
   ['pl-nome','pl-valor','pl-aulas','pl-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pl-popular').checked=false;
   closeModal('modal-plano');
 }
 function editarPlano(idx){
@@ -2224,14 +2234,17 @@ function editarPlano(idx){
   document.getElementById('epl-dur').value=p.duracao||'Mensal';
   document.getElementById('epl-aulas').value=p.aulasSemanais||'';
   document.getElementById('epl-desc').value=p.desc||'';
+  document.getElementById('epl-popular').checked=!!p.popular;
   openModal('modal-editar-plano');
 }
 function saveEditPlano(){
   const idx=parseInt(document.getElementById('epl-idx').value);
   const nome=document.getElementById('epl-nome').value.trim();
   const valor=parseFloat(document.getElementById('epl-valor').value)||0;
+  const popular=document.getElementById('epl-popular').checked;
   if(!nome||!valor){alert('Informe nome e valor do plano.');return;}
-  planos[idx]={nome,valor,duracao:document.getElementById('epl-dur').value,aulasSemanais:parseInt(document.getElementById('epl-aulas').value)||0,desc:document.getElementById('epl-desc').value.trim()};
+  if(popular)planos.forEach(p=>p.popular=false);
+  planos[idx]={nome,valor,duracao:document.getElementById('epl-dur').value,aulasSemanais:parseInt(document.getElementById('epl-aulas').value)||0,desc:document.getElementById('epl-desc').value.trim(),popular};
   save();renderPlanos();
   closeModal('modal-editar-plano');
   if(currentPlanoIdx!==null) showPlanoDetalhe(idx);
