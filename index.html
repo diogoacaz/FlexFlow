@@ -2252,7 +2252,7 @@ let currentPlanoIdx=null;
 function showPlanoDetalhe(idx){
   currentPlanoIdx=idx;
   const p=planos[idx];
-  const duracaoLabel=p.duracao.includes('Trimestral')?'/trim.':p.duracao.includes('Semestral')?'/sem.':p.duracao.includes('Anual')?'/ano':'/mês';
+  const duracaoLabel=p.duracao==='1 aula'?'/aula':p.duracao.includes('Trimestral')?'/trim.':p.duracao.includes('Semestral')?'/sem.':p.duracao.includes('Anual')?'/ano':'/mês';
   document.getElementById('pldet-nome-title').textContent=p.nome;
   document.getElementById('pldet-nome').textContent=p.nome;
   document.getElementById('pldet-valor').innerHTML=`R$ ${p.valor.toLocaleString('pt-BR')}<span style="font-size:14px;font-weight:400;color:var(--text-secondary);">${duracaoLabel}</span>`;
@@ -2287,7 +2287,7 @@ function renderPlanos(){
   const grid=document.getElementById('planos-grid');
   if(!grid)return;
   grid.innerHTML=planos.map((p,i)=>{
-    const duracaoLabel=p.duracao.includes('Trimestral')?'/trim.':p.duracao.includes('Semestral')?'/sem.':p.duracao.includes('Anual')?'/ano':'/mês';
+    const duracaoLabel=p.duracao==='1 aula'?'/aula':p.duracao.includes('Trimestral')?'/trim.':p.duracao.includes('Semestral')?'/sem.':p.duracao.includes('Anual')?'/ano':'/mês';
     const alunosCount=alunos.filter(a=>a.plano===p.duracao).length;
     return `<div class="card" style="cursor:pointer;${p.popular?'border:2px solid #378add;':''}" onclick="showPlanoDetalhe(${i})">
       ${p.popular?'<div class="badge bb" style="margin-bottom:10px;">Mais popular</div>':''}
