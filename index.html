@@ -216,6 +216,17 @@
     #print-area .print-sub { font-size: 12px; color: #888; margin-bottom: 32px; }
     #print-area .print-body { font-size: 14px; line-height: 1.85; white-space: pre-wrap; }
     #print-area .print-footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid #ddd; font-size: 11px; color: #aaa; }
+    #print-area .planos-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    #print-area .planos-table th { background: #1a1a1a; color: #fff; padding: 11px 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    #print-area .planos-table th:first-child { border-radius: 8px 0 0 8px; text-align: left; }
+    #print-area .planos-table th:last-child { border-radius: 0 8px 8px 0; }
+    #print-area .planos-table th, #print-area .planos-table td { text-align: center; }
+    #print-area .planos-table td { padding: 11px 16px; font-size: 13px; border-bottom: 1px solid #eee; }
+    #print-area .planos-table td:first-child { text-align: left; font-weight: 600; }
+    #print-area .planos-table tr:last-child td { border-bottom: none; }
+    #print-area .planos-table tr:nth-child(even) td { background: #f7f7f5; }
+    #print-area .print-pix { margin-top: 32px; text-align: center; font-size: 15px; padding: 14px 24px; background: #f7f7f5; border-radius: 10px; }
+    #print-area .popular-badge { display: inline-block; background: #378ADD; color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: .4px; vertical-align: middle; margin-left: 6px; }
   }
 </style>
 </head>
@@ -377,7 +388,8 @@
 
       <!-- PLANOS -->
       <div id="page-planos" class="hidden">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <button class="btn btn-w" onclick="printPlanos()">Imprimir</button>
           <button class="btn btn-p" onclick="openModal('modal-plano')">+ Novo plano</button>
         </div>
         <div class="g3" id="planos-grid"></div>
@@ -684,6 +696,15 @@
           <div id="logo-feedback" class="hidden feedback" style="margin-top:12px;background:var(--bg-success);color:var(--text-success);"></div>
         </div>
         <div class="card" style="max-width:460px;margin-top:20px;">
+          <div class="sec-title" style="margin-bottom:6px;">Chave PIX</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Exibida na tabela de planos ao imprimir.</div>
+          <input class="fi" id="pix-key-input" placeholder="CPF, telefone, e-mail ou chave aleatória">
+          <div style="margin-top:12px;">
+            <button class="btn btn-p" onclick="savePixKey()">Salvar chave PIX</button>
+          </div>
+          <div id="pix-feedback" class="hidden feedback" style="margin-top:10px;background:var(--bg-success);color:var(--text-success);"></div>
+        </div>
+        <div class="card" style="max-width:460px;margin-top:20px;">
           <div class="sec-title" style="margin-bottom:6px;">Mensagem de matrícula</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">Use <strong>{{nome}}</strong> para o nome do aluno e <strong>{{dia}}</strong> para o dia de vencimento. O texto pode ser personalizado na ficha de cada aluno antes de exportar.</div>
           <textarea id="matricula-template-input" class="fi" style="height:300px;resize:vertical;font-size:13px;line-height:1.75;font-family:var(--font);"></textarea>
@@ -959,7 +980,7 @@ const auth=firebase.auth();
 
 const DEFAULT_MATRICULA_TEMPLATE=`Bem-vindo(a) ao estúdio, {{nome}}!\n\nÉ com muita alegria que recebemos você em nossa equipe. Aqui você encontrará um espaço acolhedor e profissional, dedicado ao seu bem-estar através do Método Pilates.\n\nORIENTAÇÕES:\n\n• Pontualidade: Chegue com 5 minutos de antecedência. Atrasos poderão encurtar o tempo da sua aula.\n\n• Vestimenta: Use roupas confortáveis e meia antiderrapante — obrigatória nas aulas de aparelho.\n\n• Cancelamentos: Cancele com no mínimo 12 horas de antecedência para que a aula não seja descontada.\n\n• Saúde: Informe sempre ao instrutor sobre dores, lesões, cirurgias recentes ou qualquer condição de saúde.\n\n• Mensalidade: O vencimento da sua mensalidade é todo dia {{dia}} de cada mês. Em caso de dúvidas sobre pagamentos, fale conosco.\n\n• Ambiente: Mantenha o celular no silencioso durante as aulas e preserve o bem-estar dos demais alunos.\n\nEstamos aqui para cuidar de você. Qualquer dúvida, estamos à disposição!\n\nCom carinho,\nEquipe Flex Flow`;
 const DEFAULT_COMPROVANTE_TEMPLATE=`COMPROVANTE DE PAGAMENTO\n\nAluno: {{nome}}\nPlano: {{plano}}\nValor: {{valor}}\nVencimento: {{vencimento}}\nData de pagamento: {{data_pagamento}}\nForma de pagamento: {{forma}}\nStatus: {{status}}\n\nConfirmamos o recebimento do pagamento referente à mensalidade do(a) aluno(a) acima identificado(a).\n\nEste documento serve como comprovante oficial de pagamento e dispensa a emissão de qualquer outro recibo.\n\nAtenciosamente,\nEquipe Flex Flow`;
-let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null, studioLogo=null, matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE, comprovanteTemplate=DEFAULT_COMPROVANTE_TEMPLATE;
+let alunos=[], pagamentos=[], fluxo=[], professores=[], planos=[], currentUser=null, currentUid=null, studioLogo=null, pixKey='', matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE, comprovanteTemplate=DEFAULT_COMPROVANTE_TEMPLATE;
 
 function save(){
   if(!currentUid)return;
@@ -971,9 +992,11 @@ function save(){
   localStorage.setItem('ff_planos_'+currentUid,JSON.stringify(planos));
   if(studioLogo)localStorage.setItem('ff_logo_'+currentUid,studioLogo);
   else localStorage.removeItem('ff_logo_'+currentUid);
+  if(pixKey)localStorage.setItem('ff_pix_'+currentUid,pixKey);
+  else localStorage.removeItem('ff_pix_'+currentUid);
   // Sync to Firebase (fire-and-forget)
   db.collection('users').doc(currentUid)
-    .set({alunos,pagamentos,fluxo,professores,planos,studioLogo:studioLogo||null,matriculaTemplate,comprovanteTemplate})
+    .set({alunos,pagamentos,fluxo,professores,planos,studioLogo:studioLogo||null,pixKey:pixKey||'',matriculaTemplate,comprovanteTemplate})
     .catch(e=>console.warn('Firebase sync error:',e));
 }
 
@@ -1053,6 +1076,7 @@ async function startSession(email,uid){
       professores=d.professores||defaultProfessores;
       planos=d.planos||defaultPlanos;
       studioLogo=d.studioLogo||null;
+      pixKey=d.pixKey||'';
       matriculaTemplate=d.matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
       comprovanteTemplate=d.comprovanteTemplate||DEFAULT_COMPROVANTE_TEMPLATE;
     } else {
@@ -1066,6 +1090,7 @@ async function startSession(email,uid){
         professores=d.professores||defaultProfessores;
         planos=d.planos||defaultPlanos;
         studioLogo=d.studioLogo||null;
+        pixKey=d.pixKey||'';
         matriculaTemplate=d.matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
         comprovanteTemplate=d.comprovanteTemplate||DEFAULT_COMPROVANTE_TEMPLATE;
       } else {
@@ -1076,6 +1101,7 @@ async function startSession(email,uid){
         professores=JSON.parse(localStorage.getItem('ff_professores_'+uid)||'null')||defaultProfessores;
         planos=JSON.parse(localStorage.getItem('ff_planos_'+uid)||'null')||defaultPlanos;
         studioLogo=localStorage.getItem('ff_logo_'+uid)||null;
+        pixKey=localStorage.getItem('ff_pix_'+uid)||'';
         matriculaTemplate=DEFAULT_MATRICULA_TEMPLATE;
         comprovanteTemplate=DEFAULT_COMPROVANTE_TEMPLATE;
       }
@@ -1295,6 +1321,69 @@ function openMatriculaModal(idx){
   document.getElementById('modal-matricula-text').value=getMatriculaTexto(a);
   openModal('modal-matricula');
 }
+function savePixKey(){
+  pixKey=document.getElementById('pix-key-input').value.trim();
+  save();
+  const fb=document.getElementById('pix-feedback');
+  fb.textContent='Chave PIX salva!';
+  fb.classList.remove('hidden');
+  setTimeout(()=>fb.classList.add('hidden'),2500);
+}
+
+function printPlanos(){
+  const printArea=document.getElementById('print-area');
+  const logoHtml=studioLogo
+    ?`<img src="${studioLogo}" style="width:80px;height:80px;object-fit:contain;border-radius:14px;display:block;margin:0 auto 14px;">`
+    :'';
+  // Agrupar planos por aulasSemanais para tabela de comparação
+  const mensais=planos.filter(p=>p.duracao.includes('Mensal')).sort((a,b)=>a.aulasSemanais-b.aulasSemanais);
+  const trimestrais=planos.filter(p=>p.duracao.includes('Trimestral')).sort((a,b)=>a.aulasSemanais-b.aulasSemanais);
+  const outros=planos.filter(p=>!p.duracao.includes('Mensal')&&!p.duracao.includes('Trimestral'));
+  const fmt=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  let rows='';
+  if(mensais.length||trimestrais.length){
+    const freqs=[...new Set([...mensais,...trimestrais].map(p=>p.aulasSemanais))].sort((a,b)=>a-b);
+    rows=freqs.map(f=>{
+      const m=mensais.find(p=>p.aulasSemanais===f);
+      const t=trimestrais.find(p=>p.aulasSemanais===f);
+      const pop=(m&&m.popular)||(t&&t.popular);
+      return `<tr>
+        <td>${f}x por semana${pop?'<span class="popular-badge">Mais popular</span>':''}</td>
+        <td>${m?fmt(m.valor):'—'}</td>
+        <td>${t?fmt(t.valor/3)+'/mês':''}</td>
+        <td>${t?fmt(t.valor):'—'}</td>
+      </tr>`;
+    }).join('');
+  }
+  let outrosHtml='';
+  if(outros.length){
+    outrosHtml=`<div style="margin-top:28px;"><table class="planos-table"><thead><tr>
+      <th style="text-align:left;">Plano</th><th>Valor</th><th>Duração</th>
+    </tr></thead><tbody>${outros.map(p=>`<tr>
+      <td>${p.nome}${p.popular?'<span class="popular-badge">Mais popular</span>':''}</td>
+      <td>${fmt(p.valor)}</td><td>${p.duracao}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+  }
+  printArea.innerHTML=`
+    <div style="text-align:center;margin-bottom:32px;">
+      ${logoHtml}
+      <div style="font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px;">Flex Flow</div>
+      <div style="font-size:13px;color:#888;">Tabela de Planos</div>
+    </div>
+    ${rows?`<table class="planos-table"><thead><tr>
+      <th style="text-align:left;">Frequência</th>
+      <th>Plano Mensal</th>
+      <th>Trimestral / mês</th>
+      <th>Trimestral total</th>
+    </tr></thead><tbody>${rows}</tbody></table>`:''}
+    ${outrosHtml}
+    ${pixKey?`<div class="print-pix"><strong>PIX:</strong> ${pixKey}</div>`:''}
+    <div class="print-footer" style="margin-top:36px;">Flex Flow · ${new Date().toLocaleDateString('pt-BR')}</div>
+  `;
+  window.print();
+  printArea.innerHTML='';
+}
+
 function saveMatriculaTemplate(){
   matriculaTemplate=document.getElementById('matricula-template-input').value;
   save();
@@ -1809,6 +1898,7 @@ function showPage(p){
   if(p==='fluxo')renderFluxo();
   if(p==='notificacoes')renderNotificacoes();
   if(p==='configuracoes'){
+    document.getElementById('pix-key-input').value=pixKey||'';
     document.getElementById('matricula-template-input').value=matriculaTemplate||DEFAULT_MATRICULA_TEMPLATE;
     document.getElementById('comprovante-template-input').value=comprovanteTemplate||DEFAULT_COMPROVANTE_TEMPLATE;
   }
