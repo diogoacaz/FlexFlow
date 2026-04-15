@@ -784,7 +784,7 @@
   <div class="modal">
     <div class="modal-title">Novo professor</div>
     <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="pf-nome" placeholder="Nome"></div><div class="fg"><label class="fl">Especialidade</label><input class="fi" id="pf-esp" placeholder="Ex: Pilates clínico"></div></div>
-    <div class="fr2"><div class="fg"><label class="fl">Telefone</label><input class="fi" id="pf-tel" placeholder="(21) 99999-9999"></div><div class="fg"><label class="fl">Status</label><select class="fi" id="pf-status"><option>Ativo</option><option>Ativa</option><option>Férias</option><option>Inativo</option></select></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Telefone</label><input class="fi" id="pf-tel" placeholder="(21) 99999-9999"></div><div class="fg"><label class="fl">Status</label><select class="fi" id="pf-status"><option>Ativo</option><option>Inativo</option></select></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Repasse (%)</label><input class="fi" id="pf-repasse" type="number" min="0" max="100" step="0.1" placeholder="0"></div><div class="fg"></div></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-professor')">Cancelar</button><button class="btn btn-p" onclick="addProfessor()">Cadastrar professor</button></div>
   </div>
@@ -795,7 +795,7 @@
     <div class="modal-title">Editar professor</div>
     <input type="hidden" id="epf-idx">
     <div class="fr2"><div class="fg"><label class="fl">Nome completo</label><input class="fi" id="epf-nome" placeholder="Nome"></div><div class="fg"><label class="fl">Especialidade</label><input class="fi" id="epf-esp" placeholder="Ex: Pilates clínico"></div></div>
-    <div class="fr2"><div class="fg"><label class="fl">Telefone</label><input class="fi" id="epf-tel" placeholder="(21) 99999-9999"></div><div class="fg"><label class="fl">Status</label><select class="fi" id="epf-status"><option>Ativo</option><option>Ativa</option><option>Férias</option><option>Inativo</option></select></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Telefone</label><input class="fi" id="epf-tel" placeholder="(21) 99999-9999"></div><div class="fg"><label class="fl">Status</label><select class="fi" id="epf-status"><option>Ativo</option><option>Inativo</option></select></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Repasse (%)</label><input class="fi" id="epf-repasse" type="number" min="0" max="100" step="0.1" placeholder="0"></div><div class="fg"></div></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-professor')">Cancelar</button><button class="btn btn-p" onclick="saveEditProfessor()">Salvar alterações</button></div>
   </div>
@@ -1962,7 +1962,7 @@ function showProfessorDetalhe(idx){
   const p=professores[idx];
   const ini=p.nome.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
   const cor=avCoresList[idx%4];
-  const badgeCls=p.status==='Ativo'||p.status==='Ativa'?'bg':p.status==='Férias'?'ba':'br';
+  const badgeCls=p.status==='Ativo'?'bg':'br';
   document.getElementById('pdet-nome-title').textContent=p.nome;
   const avEl=document.getElementById('pdet-av');
   avEl.className='av '+cor;
@@ -2001,7 +2001,7 @@ function renderProfessores(){
   grid.innerHTML=professores.map((p,i)=>{
     const ini=p.nome.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const cor=avCoresList[i%4];
-    const badgeCls=p.status==='Ativo'||p.status==='Ativa'?'bg':p.status==='Férias'?'ba':'br';
+    const badgeCls=p.status==='Ativo'?'bg':'br';
     const alunosCount=alunos.filter(a=>a.prof===p.nome).length;
     return `<div class="card" style="cursor:pointer;" onclick="showProfessorDetalhe(${i})">
       <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;">
