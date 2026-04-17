@@ -1673,19 +1673,26 @@ function filterAlunos(q){
 
 function showHistorico(idx){
   const a=alunos[idx];
+  const histFluxo=fluxo
+    .filter(f=>f.tipo==='income'&&f.desc==='Mensalidade — '+a.nome)
+    .sort((x,y)=>x.dataRaw>y.dataRaw?1:x.dataRaw<y.dataRaw?-1:0);
+  const total=histFluxo.reduce((s,f)=>s+parseValorNum(f.valor),0);
   document.getElementById('hist-nome').textContent=a.nome+' — histórico de pagamentos';
-  const total=a.hist.filter(h=>h.st==='pago').reduce((s,h)=>s+parseInt(h.val.replace(/[^0-9]/g,'')),0);
-  document.getElementById('hist-total').textContent='R$ '+total.toLocaleString('pt-BR');
+  document.getElementById('hist-total').textContent='R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('hist-plano').textContent=a.plano;
   document.getElementById('hist-status').textContent=a.status==='pago'?'Em dia':a.status==='pendente'?'Pendente':'Atrasado';
-  document.getElementById('hist-list').innerHTML=a.hist.map(h=>`
-    <div class="hist-line">
-      <span style="color:var(--text-secondary);min-width:36px;">${h.mes}</span>
-      <span style="flex:1;padding:0 12px;">${a.plano}</span>
-      <span style="margin-right:12px;">${h.forma}</span>
-      <span style="margin-right:12px;font-weight:600;">${h.val}</span>
-      <span class="badge ${h.st==='pago'?'bg':h.st==='pendente'?'ba':'br'}">${h.st==='pago'?'Pago':h.st==='pendente'?'Pendente':'Atrasado'}</span>
-    </div>`).join('');
+  document.getElementById('hist-list').innerHTML=histFluxo.length
+    ?histFluxo.map(f=>{
+        const dataLabel=f.dataRaw?new Date(f.dataRaw+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}):f.data||'—';
+        return `<div class="hist-line">
+          <span style="color:var(--text-secondary);min-width:80px;font-size:12px;">${dataLabel}</span>
+          <span style="flex:1;padding:0 12px;">${a.plano}</span>
+          <span style="margin-right:12px;color:var(--text-secondary);font-size:12px;">${f.forma||'—'}</span>
+          <span style="margin-right:12px;font-weight:600;">${f.valor.replace('+','')}</span>
+          <span class="badge bg">Pago</span>
+        </div>`;
+      }).join('')
+    :'<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">Nenhum pagamento registrado no fluxo de caixa</div>';
   showPage('historico');
 }
 
@@ -1732,7 +1739,7 @@ function marcarPago(idx){
   const dataRaw=hoje.toISOString().split('T')[0];
   const dataFmt=hoje.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   const valorNum=parseValorNum(pagamentos[idx].valor);
-  fluxo.unshift({desc:'Mensalidade — '+nomeAluno,tipo:'income',valor:'+R$ '+valorNum.toLocaleString('pt-BR'),data:dataFmt,dataRaw});
+  fluxo.unshift({desc:'Mensalidade — '+nomeAluno,tipo:'income',valor:'+R$ '+valorNum.toLocaleString('pt-BR'),data:dataFmt,dataRaw,forma:'PIX'});
   save();
   filterPag(currentPagFilter);
   renderAlunos(alunos);
@@ -2035,7 +2042,7 @@ function addPagamento(){
     pagamentos.push({aluno:nomeAluno,plano,valor:'R$ '+valor,venc,status:'pago',forma});
   }
   const dataFmt=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-  fluxo.unshift({desc:'Mensalidade — '+nomeAluno,tipo:'income',valor:'+R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:data});
+  fluxo.unshift({desc:'Mensalidade — '+nomeAluno,tipo:'income',valor:'+R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:data,forma});
   save();
   filterPag(currentPagFilter);
   renderAlunos(alunos);
@@ -2414,7 +2421,7 @@ function savePagamentoDetalhe(){
     const dataRawFinal=dataPagRaw||new Date().toISOString().split('T')[0];
     const dataFmt=new Date(dataRawFinal+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
     if(a)a.hist.push({mes:MES[new Date(dataRawFinal+'T00:00:00').getMonth()],val:'R$ '+valor.toLocaleString('pt-BR'),forma,st:'pago'});
-    fluxo.unshift({desc:'Mensalidade — '+pagamentos[idx].aluno,tipo:'income',valor:'+R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:dataRawFinal});
+    fluxo.unshift({desc:'Mensalidade — '+pagamentos[idx].aluno,tipo:'income',valor:'+R$ '+valor.toLocaleString('pt-BR'),data:dataFmt,dataRaw:dataRawFinal,forma});
   }
   save();filterPag(currentPagFilter);renderAlunos(alunos);renderNotificacoes();updateDashboard();
   showPagamentoDetalhe(idx);
