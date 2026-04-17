@@ -783,8 +783,8 @@
     <div class="fr2"><div class="fg"><label class="fl">Município</label><input class="fi" id="in-municipio" placeholder="São Paulo"></div><div class="fg"><label class="fl">Bairro</label><input class="fi" id="in-bairro" placeholder="Centro"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="in-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="in-numero" placeholder="123"></div></div>
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="in-complemento" placeholder="Apto, Bloco, Sala..."></div>
-    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
-    <div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div>
+    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano" onchange="autoFillValorAluno('in-valor',this)"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" type="number" id="in-valor" placeholder="0" step="0.01" min="0"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div><div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div></div>
     <div class="fg"><label class="fl">Situação</label><select class="fi" id="in-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-aluno')">Cancelar</button><button class="btn btn-p" onclick="addAluno()">Cadastrar aluno</button></div>
   </div>
@@ -800,8 +800,9 @@
     <div class="fr2"><div class="fg"><label class="fl">Município</label><input class="fi" id="ed-municipio" placeholder="São Paulo"></div><div class="fg"><label class="fl">Bairro</label><input class="fi" id="ed-bairro" placeholder="Centro"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="ed-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="ed-numero" placeholder="123"></div></div>
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="ed-complemento" placeholder="Apto, Bloco, Sala..."></div>
-    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
-    <div class="fr2"><div class="fg"><label class="fl">Data de início</label><input class="fi" id="ed-inicio" type="date"></div><div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano" onchange="autoFillValorAluno('ed-valor',this)"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Valor (R$)</label><input class="fi" type="number" id="ed-valor" placeholder="0" step="0.01" min="0"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div><div class="fg"><label class="fl">Data de início</label><input class="fi" id="ed-inicio" type="date"></div></div>
+    <div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-aluno')">Cancelar</button><button class="btn btn-p" onclick="saveEditAluno()">Salvar alterações</button></div>
   </div>
 </div>
@@ -1613,7 +1614,7 @@ function renderAlunos(lista){
   document.getElementById('alunos-body').innerHTML=lista.map(a=>{
     const i=alunos.indexOf(a);
     const ativo=a.ativo!==false;
-    const valor=getPlanoPreco(a.plano);
+    const valor=a.valorMensal||getPlanoPreco(a.plano);
     const matricula=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
     return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
@@ -1640,7 +1641,7 @@ function showAlunoDetalhe(idx){
   const ativo=a.ativo!==false;
   document.getElementById('det-badges').innerHTML=
     `<span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>`;
-  const valorAluno=getPlanoPreco(a.plano);
+  const valorAluno=a.valorMensal||getPlanoPreco(a.plano);
   document.getElementById('det-plano').textContent=a.plano||'—';
   document.getElementById('det-valor').textContent='R$ '+valorAluno.toLocaleString('pt-BR');
   document.getElementById('det-prof').textContent=a.prof||'—';
@@ -1959,14 +1960,14 @@ function addAluno(){
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
     diaVencimento=d.getDate();
   }
-  const valor=getPlanoPreco(plano);
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,inicio,diaVencimento,hist:[]});
-  pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
+  const valorMensal=parseFloat(document.getElementById('in-valor').value)||getPlanoPreco(plano);
+  alunos.push({nome,ini,cor,plano,valorMensal,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,inicio,diaVencimento,hist:[]});
+  pagamentos.push({aluno:nome,plano,valor:'R$ '+valorMensal,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
   renderPagamentos(pagamentos);
   updateDashboard();
-  ['in-nome','in-tel','in-cpf','in-email','in-cep','in-logradouro','in-numero','in-complemento','in-estado','in-municipio','in-bairro','in-inicio'].forEach(id=>document.getElementById(id).value='');
+  ['in-nome','in-tel','in-cpf','in-email','in-cep','in-logradouro','in-numero','in-complemento','in-estado','in-municipio','in-bairro','in-inicio','in-valor'].forEach(id=>document.getElementById(id).value='');
   closeModal('modal-aluno');
 }
 
@@ -1985,6 +1986,7 @@ function editarAluno(idx){
   document.getElementById('ed-municipio').value=a.municipio||'';
   document.getElementById('ed-bairro').value=a.bairro||'';
   document.getElementById('ed-plano').value=a.plano;
+  document.getElementById('ed-valor').value=a.valorMensal||getPlanoPreco(a.plano)||'';
   document.getElementById('ed-prof').value=a.prof;
   document.getElementById('ed-inicio').value=a.inicio||'';
   document.getElementById('ed-ativo').value=a.ativo!==false?'true':'false';
@@ -2009,6 +2011,7 @@ function saveEditAluno(){
   a.municipio=document.getElementById('ed-municipio').value.trim();
   a.bairro=document.getElementById('ed-bairro').value.trim();
   a.plano=document.getElementById('ed-plano').value;
+  a.valorMensal=parseFloat(document.getElementById('ed-valor').value)||getPlanoPreco(a.plano);
   a.prof=document.getElementById('ed-prof').value;
   a.inicio=document.getElementById('ed-inicio').value;
   if(a.inicio){a.diaVencimento=new Date(a.inicio+'T00:00:00').getDate();}
@@ -2301,6 +2304,10 @@ function showPlanoDetalhe(idx){
   showPage('plano-detalhe');
 }
 
+function autoFillValorAluno(valId,sel){
+  const p=planos.find(x=>x.duracao===sel.value);
+  if(p){const el=document.getElementById(valId);if(el)el.value=p.valor;}
+}
 function syncPlanoSelects(){
   const opts=planos.map(p=>`<option value="${p.duracao}">${p.nome} — R$ ${p.valor.toLocaleString('pt-BR')}</option>`).join('');
   ['in-plano','ed-plano'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
