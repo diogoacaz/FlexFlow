@@ -361,7 +361,7 @@
           <input class="si" id="busca-aluno" placeholder="Buscar aluno..." oninput="filterAlunos(this.value)" style="width:200px;min-width:130px;">
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn" onclick="openModal('modal-importar-alunos')">&#8593; Importar</button>
-            <button class="btn btn-p" onclick="openModal('modal-aluno')">+ Novo aluno</button>
+            <button class="btn btn-p" onclick="syncPlanoSelects();syncProfSelects();openModal('modal-aluno')">+ Novo aluno</button>
           </div>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:14px;" id="alunos-filtros">
@@ -1987,6 +1987,8 @@ function addAluno(){
 
 function editarAluno(idx){
   const a=alunos[idx];
+  syncPlanoSelects();
+  syncProfSelects();
   document.getElementById('ed-idx').value=idx;
   document.getElementById('ed-nome').value=a.nome||'';
   document.getElementById('ed-tel').value=a.tel||'';
