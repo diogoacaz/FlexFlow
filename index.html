@@ -1628,7 +1628,7 @@ function renderAlunos(lista){
     const matricula=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
     return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
-      <td>${planLabelShort(a.plano)}</td>
+      <td>${planos.find(x=>x.duracao===a.plano)?.nome||a.plano}</td>
       <td>R$ ${valor.toLocaleString('pt-BR')}</td>
       <td>${a.prof}</td>
       <td>${matricula}</td>
