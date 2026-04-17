@@ -2632,8 +2632,8 @@ function downloadTemplate(){
       p.duracao,
       p.valor,
       profNome,
-      '2026-04-01',
-      'true'
+      '01/04/26',
+      'Sim'
     ]);
   });
   const wb=XLSX.utils.book_new();
@@ -2641,6 +2641,27 @@ function downloadTemplate(){
   ws['!cols']=[{wch:20},{wch:16},{wch:15},{wch:24},{wch:10},{wch:18},{wch:8},{wch:12},{wch:12},{wch:14},{wch:4},{wch:15},{wch:11},{wch:18},{wch:12},{wch:6}];
   XLSX.utils.book_append_sheet(wb,ws,'Alunos');
   XLSX.writeFile(wb,'modelo_importacao_alunos.xlsx');
+}
+
+function _parseDateImport(val){
+  if(val===null||val===undefined||val==='')return null;
+  // Excel serial number (date stored as number)
+  if(typeof val==='number'){
+    const d=new Date(Math.round((val-25569)*86400000));
+    return isNaN(d)?null:d;
+  }
+  const s=String(val).trim();
+  if(!s)return null;
+  // dd/mm/aa ou dd/mm/aaaa
+  const br=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(br){
+    let y=parseInt(br[3]);if(y<100)y+=2000;
+    const d=new Date(y,parseInt(br[2])-1,parseInt(br[1]));
+    return isNaN(d)?null:d;
+  }
+  // YYYY-MM-DD
+  const iso=new Date(s+'T00:00:00');
+  return isNaN(iso)?null:iso;
 }
 
 function processarArquivoImport(input){
@@ -2672,16 +2693,20 @@ function processarArquivoImport(input){
       const nome=(row['Nome']||row['nome']||'').trim();
       if(!nome){erros.push('Linha '+(i+2)+': nome vazio — ignorado.');return;}
       const plano=(row['Plano']||row['plano']||(planos[0]?planos[0].duracao:'')).trim();
-      const prof=(row['Professor']||row['professor']||(professores[0]?professores[0].nome:'')).trim();
-      const inicio=(row['DataInicio']||row['Data Inicio']||'').trim();
-      const ativoRaw=(row['Ativo']||row['ativo']||'true').trim().toLowerCase();
-      const ativo=ativoRaw!=='false'&&ativoRaw!=='0'&&ativoRaw!=='não'&&ativoRaw!=='nao';
+      const prof=(row['Professor']||row['professor']||(professores[0]?professores[0].nome:'')).toString().trim();
+      const inicioRaw=row['DataInicio']||row['Data Inicio']||row['DataInício']||'';
+      const ativoRaw=row['Ativo']||row['ativo'];
+      const ativo=ativoRaw===false?false:ativoRaw===true?true:!/^(false|0|não|nao|n|no)$/i.test(String(ativoRaw||'').trim());
       const cor=avCores[(alunos.length+importData.length)%4];
       const partes=nome.trim().split(/\s+/);
       const ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
-      let venc='—';
-      let diaVencimento=1;
-      if(inicio){try{const d=new Date(inicio+'T00:00:00');if(!isNaN(d)){venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});diaVencimento=d.getDate();}}catch(ee){}}
+      let venc='—', diaVencimento=1, inicio='';
+      const dParsed=_parseDateImport(inicioRaw);
+      if(dParsed){
+        venc=dParsed.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+        diaVencimento=dParsed.getDate();
+        inicio=dParsed.getFullYear()+'-'+String(dParsed.getMonth()+1).padStart(2,'0')+'-'+String(dParsed.getDate()).padStart(2,'0');
+      }
       importData.push({nome,ini,cor,plano,prof,venc,status:'pendente',diaVencimento,
         tel:(row['Telefone']||row['telefone']||'').trim(),
         cpf:(row['CPF']||row['cpf']||'').trim(),
