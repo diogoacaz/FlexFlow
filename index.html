@@ -1708,9 +1708,22 @@ function showPlanoDetalhe(idx){
   showPage('plano-detalhe');
 }
 
-function syncPlanoSelects(){
-  const opts=planos.map(p=>`<option value="${p.duracao}">${p.nome} — R$ ${p.valor.toLocaleString('pt-BR')}</option>`).join('');
-  ['in-plano','ed-plano'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+function autoFillValorAluno(valId,sel){
+  const opt=sel.options[sel.selectedIndex];
+  if(!opt)return;
+  const v=opt.dataset.valor;
+  if(v!==undefined){const el=document.getElementById(valId);if(el)el.value=v;}
+}
+function syncPlanoSelects(selDuracao){
+  ['in-plano','ed-plano'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=selDuracao!==undefined?selDuracao:el.value;
+    el.innerHTML=planos.map(p=>{
+      const tipo=p.duracao.includes('Trimestral')?'Trimestral':p.duracao.includes('Semestral')?'Semestral':p.duracao.includes('Anual')?'Anual':p.duracao==='1 aula'?'Avulsa':'Mensal';
+      return `<option value="${p.duracao}" data-valor="${p.valor}"${p.duracao===cur?' selected':''}>${p.nome} · ${tipo}</option>`;
+    }).join('');
+  });
 }
 function renderPlanos(){
   const grid=document.getElementById('planos-grid');
