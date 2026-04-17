@@ -1430,6 +1430,12 @@ function planLabel(duracao){
   const p=planos.find(x=>x.duracao===duracao);
   return p?p.nome+' · '+p.duracao:duracao||'—';
 }
+function planLabelShort(duracao){
+  if(!duracao)return '—';
+  const m=duracao.match(/^(\d+)x\s+(Mensal|Trimestral|Semestral|Anual)$/i);
+  if(m)return m[1]+'xS - '+m[2];
+  return duracao;
+}
 
 function parseValorNum(v){
   return parseFloat((v||'0').replace(/[^0-9,]/g,'').replace(',','.'))||0;
@@ -1622,7 +1628,7 @@ function renderAlunos(lista){
     const matricula=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
     return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
-      <td>${planLabel(a.plano)}</td>
+      <td>${planLabelShort(a.plano)}</td>
       <td>R$ ${valor.toLocaleString('pt-BR')}</td>
       <td>${a.prof}</td>
       <td>${matricula}</td>
