@@ -1426,6 +1426,10 @@ function getPlanoPreco(duracao){
   const p=planos.find(x=>x.duracao===duracao);
   return p?p.valor:350;
 }
+function planLabel(duracao){
+  const p=planos.find(x=>x.duracao===duracao);
+  return p?p.nome+' · '+p.duracao:duracao||'—';
+}
 
 function parseValorNum(v){
   return parseFloat((v||'0').replace(/[^0-9,]/g,'').replace(',','.'))||0;
@@ -1618,7 +1622,7 @@ function renderAlunos(lista){
     const matricula=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
     return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
-      <td>${a.plano}</td>
+      <td>${planLabel(a.plano)}</td>
       <td>R$ ${valor.toLocaleString('pt-BR')}</td>
       <td>${a.prof}</td>
       <td>${matricula}</td>
@@ -1642,7 +1646,10 @@ function showAlunoDetalhe(idx){
   document.getElementById('det-badges').innerHTML=
     `<span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>`;
   const valorAluno=a.valorMensal||getPlanoPreco(a.plano);
-  document.getElementById('det-plano').textContent=a.plano||'—';
+  const pObj=planos.find(x=>x.duracao===a.plano);
+  document.getElementById('det-plano').innerHTML=pObj
+    ?`${pObj.nome}<div style="font-size:12px;font-weight:400;color:var(--text-secondary);margin-top:2px;">${pObj.duracao}</div>`
+    :(a.plano||'—');
   document.getElementById('det-valor').textContent='R$ '+valorAluno.toLocaleString('pt-BR');
   document.getElementById('det-prof').textContent=a.prof||'—';
   document.getElementById('det-matricula').textContent=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
@@ -2113,7 +2120,7 @@ function showProfessorDetalhe(idx){
           <div class="av ${a.cor}" style="flex-shrink:0;">${a.ini}</div>
           <div>
             <div style="font-size:13px;font-weight:600;">${a.nome}</div>
-            <div style="font-size:11px;color:var(--text-secondary);">${a.plano}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${planLabel(a.plano)}</div>
           </div>
         </div>
         <span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>
@@ -2235,7 +2242,7 @@ function renderRepasses(){
       totalProf+=valorRepasse;
       return `<div class="fe">
         <div style="flex:1;font-size:13px;font-weight:500;">${a.nome}</div>
-        <div style="font-size:12px;color:var(--text-secondary);width:90px;">${a.plano}</div>
+        <div style="font-size:12px;color:var(--text-secondary);width:90px;">${planLabel(a.plano)}</div>
         <div style="font-size:13px;width:90px;text-align:right;">R$ ${valorMensal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
         <div style="font-size:13px;font-weight:600;color:#1D9E75;width:100px;text-align:right;">R$ ${valorRepasse.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
       </div>`;
