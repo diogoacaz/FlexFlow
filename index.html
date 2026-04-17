@@ -1584,16 +1584,23 @@ function updatePlanChart(){
   const legendEl=document.getElementById('dash-plano-legend');
   if(!canvas)return;
   const cores=['#378ADD','#7F77DD','#1D9E75','#F5A623','#E24B4A','#888780'];
-  const comAlunos=planos.map((p,i)=>({p,i,n:alunos.filter(a=>a.plano===p.duracao).length})).filter(x=>x.n>0);
+  // Group students by a.plano value directly — robust against old/new format mismatch
+  const grupos={};
+  alunos.forEach(a=>{if(a.plano)grupos[a.plano]=(grupos[a.plano]||0)+1;});
+  const comAlunos=Object.entries(grupos).map(([planoVal,n],ci)=>{
+    const pi=planos.findIndex(x=>x.duracao===planoVal);
+    const p=pi>=0?planos[pi]:{nome:planoVal,duracao:planoVal};
+    return {p,ci,n};
+  });
   const total=comAlunos.reduce((s,x)=>s+x.n,0);
   if(planChart){
     planChart.data.labels=comAlunos.map(x=>x.p.nome);
     planChart.data.datasets[0].data=comAlunos.map(x=>x.n);
-    planChart.data.datasets[0].backgroundColor=comAlunos.map(x=>cores[x.i%cores.length]);
+    planChart.data.datasets[0].backgroundColor=comAlunos.map(x=>cores[x.ci%cores.length]);
     planChart.update();
   }
   if(legendEl)legendEl.innerHTML=comAlunos.length
-    ?comAlunos.map(x=>{const pct=Math.round(x.n/total*100);return `<span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:${cores[x.i%cores.length]};display:inline-block;"></span>${x.p.nome} ${pct}%</span>`;}).join('')
+    ?comAlunos.map(x=>{const pct=Math.round(x.n/total*100);return `<span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:${cores[x.ci%cores.length]};display:inline-block;"></span>${x.p.nome} ${pct}%</span>`;}).join('')
     :'<span style="font-size:12px;color:var(--text-secondary);">Nenhum aluno matriculado</span>';
 }
 

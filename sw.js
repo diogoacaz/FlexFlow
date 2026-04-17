@@ -1,4 +1,4 @@
-const CACHE = 'flexflow-v3';
+const CACHE = 'flexflow-v4';
 const ICON_PATHS = [
   '/FlexFlow/icons/icon-192.png',
   '/FlexFlow/icons/icon-512.png',
