@@ -610,8 +610,8 @@
     <div class="fr2"><div class="fg"><label class="fl">Município</label><input class="fi" id="in-municipio" placeholder="São Paulo"></div><div class="fg"><label class="fl">Bairro</label><input class="fi" id="in-bairro" placeholder="Centro"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="in-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="in-numero" placeholder="123"></div></div>
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="in-complemento" placeholder="Apto, Bloco, Sala..."></div>
-    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano"><option>Mensal — R$ 350</option><option>Trimestral — R$ 900</option><option>Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
-    <div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div>
+    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="in-plano" onchange="autoFillValorAluno('in-valor',this)"><option>Mensal — R$ 350</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="in-prof"><option>Mariana Silva</option></select></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Valor mensal (R$)</label><input class="fi" id="in-valor" type="number" step="0.01" min="0" placeholder="0.00"></div><div class="fg"><label class="fl">Data de início</label><input class="fi" id="in-inicio" type="date"></div></div>
     <div class="fg"><label class="fl">Situação</label><select class="fi" id="in-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-aluno')">Cancelar</button><button class="btn btn-p" onclick="addAluno()">Cadastrar aluno</button></div>
   </div>
@@ -627,8 +627,9 @@
     <div class="fr2"><div class="fg"><label class="fl">Município</label><input class="fi" id="ed-municipio" placeholder="São Paulo"></div><div class="fg"><label class="fl">Bairro</label><input class="fi" id="ed-bairro" placeholder="Centro"></div></div>
     <div class="fr2"><div class="fg"><label class="fl">Logradouro</label><input class="fi" id="ed-logradouro" placeholder="Rua, Av., Alameda..."></div><div class="fg"><label class="fl">Número</label><input class="fi" id="ed-numero" placeholder="123"></div></div>
     <div class="fg"><label class="fl">Complemento</label><input class="fi" id="ed-complemento" placeholder="Apto, Bloco, Sala..."></div>
-    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano"><option value="Mensal">Mensal — R$ 350</option><option value="Trimestral">Trimestral — R$ 900</option><option value="Semestral">Semestral — R$ 1.800</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option><option>Lucas Ferreira</option><option>Juliana Ramos</option><option>Rafael Duarte</option></select></div></div>
-    <div class="fr2"><div class="fg"><label class="fl">Data de início</label><input class="fi" id="ed-inicio" type="date"></div><div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Plano</label><select class="fi" id="ed-plano" onchange="autoFillValorAluno('ed-valor',this)"><option value="Mensal">Mensal</option></select></div><div class="fg"><label class="fl">Professor</label><select class="fi" id="ed-prof"><option>Mariana Silva</option></select></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Valor mensal (R$)</label><input class="fi" id="ed-valor" type="number" step="0.01" min="0" placeholder="0.00"></div><div class="fg"><label class="fl">Data de início</label><input class="fi" id="ed-inicio" type="date"></div></div>
+    <div class="fr2"><div class="fg"><label class="fl">Situação</label><select class="fi" id="ed-ativo"><option value="true">Ativo</option><option value="false">Inativo</option></select></div><div class="fg"></div></div>
     <div class="ma"><button class="btn" onclick="closeModal('modal-editar-aluno')">Cancelar</button><button class="btn btn-p" onclick="saveEditAluno()">Salvar alterações</button></div>
   </div>
 </div>
@@ -1433,12 +1434,13 @@ function addAluno(){
   const estado=document.getElementById('in-estado').value.trim();
   const municipio=document.getElementById('in-municipio').value.trim();
   const bairro=document.getElementById('in-bairro').value.trim();
-  const planoRaw=document.getElementById('in-plano').value;
+  const plano=document.getElementById('in-plano').value;
   const prof=document.getElementById('in-prof').value;
+  const valorInputRaw=parseFloat(document.getElementById('in-valor').value);
+  const valorMensal=isNaN(valorInputRaw)?null:valorInputRaw;
   const inicio=document.getElementById('in-inicio').value;
   const ativo=document.getElementById('in-ativo').value!=='false';
   if(!nome){alert('Informe o nome do aluno.');return;}
-  const plano=planoRaw; // value attribute já é a duração (ex: "Mensal")
   const cor=avCores[alunos.length%4];
   const partes=nome.split(' ');
   const ini=(partes[0][0]+(partes[1]?partes[1][0]:partes[0][1]||'')).toUpperCase();
@@ -1449,8 +1451,8 @@ function addAluno(){
     venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
     diaVencimento=d.getDate();
   }
-  const valor=getPlanoPreco(plano);
-  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,inicio,diaVencimento,hist:[]});
+  const valor=valorMensal!=null?valorMensal:getPlanoPreco(plano);
+  alunos.push({nome,ini,cor,plano,prof,venc,status:'pendente',tel,cpf,email,cep,logradouro,numero,complemento,estado,municipio,bairro,ativo,inicio,diaVencimento,valorMensal,hist:[]});
   pagamentos.push({aluno:nome,plano,valor:'R$ '+valor,venc,status:'pendente',forma:'—'});
   save();
   renderAlunos(alunos);
@@ -1474,8 +1476,9 @@ function editarAluno(idx){
   document.getElementById('ed-estado').value=a.estado||'';
   document.getElementById('ed-municipio').value=a.municipio||'';
   document.getElementById('ed-bairro').value=a.bairro||'';
-  document.getElementById('ed-plano').value=a.plano;
-  document.getElementById('ed-prof').value=a.prof;
+  syncPlanoSelects(a.plano);
+  syncProfSelects(a.prof);
+  document.getElementById('ed-valor').value=a.valorMensal!=null?a.valorMensal:(getPlanoPreco(a.plano)||'');
   document.getElementById('ed-inicio').value=a.inicio||'';
   document.getElementById('ed-ativo').value=a.ativo!==false?'true':'false';
   openModal('modal-editar-aluno');
@@ -1500,6 +1503,8 @@ function saveEditAluno(){
   a.bairro=document.getElementById('ed-bairro').value.trim();
   a.plano=document.getElementById('ed-plano').value;
   a.prof=document.getElementById('ed-prof').value;
+  const valorEdit=parseFloat(document.getElementById('ed-valor').value);
+  a.valorMensal=isNaN(valorEdit)?null:valorEdit;
   a.inicio=document.getElementById('ed-inicio').value;
   if(a.inicio){a.diaVencimento=new Date(a.inicio+'T00:00:00').getDate();}
   a.ativo=document.getElementById('ed-ativo').value!=='false';
@@ -1608,9 +1613,13 @@ function showProfessorDetalhe(idx){
     :'<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">Nenhum aluno atribuído</div>';
   showPage('professor-detalhe');
 }
-function syncProfSelects(){
-  const opts=professores.map(p=>`<option>${p.nome}</option>`).join('');
-  ['in-prof','ed-prof'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+function syncProfSelects(selNome){
+  ['in-prof','ed-prof'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=selNome!==undefined?selNome:el.value;
+    el.innerHTML=professores.map(p=>`<option${p.nome===cur?' selected':''}>${p.nome}</option>`).join('');
+  });
 }
 function renderProfessores(){
   const grid=document.getElementById('professores-grid');
