@@ -1587,7 +1587,7 @@ function updatePlanChart(){
   const dados=planos.map(p=>alunos.filter(a=>a.plano===p.duracao).length);
   const total=dados.reduce((s,v)=>s+v,0)||1;
   if(planChart){planChart.data.labels=planos.map(p=>p.nome);planChart.data.datasets[0].data=dados;planChart.update();}
-  if(legendEl)legendEl.innerHTML=planos.map((p,i)=>{const pct=Math.round(dados[i]/total*100);return `<span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:${cores[i%cores.length]};display:inline-block;"></span>${p.nome} ${pct}%</span>`;}).join('');
+  if(legendEl)legendEl.innerHTML=planos.map((p,i)=>({p,i,n:dados[i]})).filter(x=>x.n>0).map(({p,i,n})=>{const pct=Math.round(n/total*100);return `<span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:${cores[i%cores.length]};display:inline-block;"></span>${p.nome} ${pct}%</span>`;}).join('');
 }
 
 function syncPagAluno(){
@@ -1828,7 +1828,8 @@ function renderFluxo(){
     document.getElementById('fluxo-list').innerHTML='<div style="text-align:center;padding:20px;font-size:13px;color:var(--text-secondary);">Nenhum lançamento em '+mesNome+' '+anoAtual+'</div>';
     return;
   }
-  document.getElementById('fluxo-list').innerHTML=listaFiltrada.map(f=>{
+  const listaOrdenada=[...listaFiltrada].sort((a,b)=>a.dataRaw>b.dataRaw?1:a.dataRaw<b.dataRaw?-1:0);
+  document.getElementById('fluxo-list').innerHTML=listaOrdenada.map(f=>{
     const i=fluxo.indexOf(f);
     return `<div class="fe">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
