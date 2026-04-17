@@ -2690,9 +2690,19 @@ function processarArquivoImport(input){
     importData=[];
     const erros=[];
     rows.forEach((row,i)=>{
-      const nome=(row['Nome']||row['nome']||'').trim();
+      const nome=(row['Nome']||row['nome']||'').toString().trim();
       if(!nome){erros.push('Linha '+(i+2)+': nome vazio — ignorado.');return;}
-      const plano=(row['Plano']||row['plano']||(planos[0]?planos[0].duracao:'')).trim();
+      // Resolve plano: por duracao exata → por valor → primeiro plano
+      const planoRaw=(row['Plano']||row['plano']||'').toString().trim();
+      const valorRef=parseFloat(String(row['Valor (R$)']||row['Valor']||row['valor']||'').toString().replace(',','.'));
+      let plano='';
+      if(planoRaw&&planos.find(p=>p.duracao===planoRaw)){
+        plano=planoRaw;
+      } else if(valorRef>0){
+        const byVal=planos.find(p=>p.valor===valorRef);
+        if(byVal)plano=byVal.duracao;
+      }
+      if(!plano)plano=planos[0]?planos[0].duracao:'';
       const prof=(row['Professor']||row['professor']||(professores[0]?professores[0].nome:'')).toString().trim();
       const inicioRaw=row['DataInicio']||row['Data Inicio']||row['DataInício']||'';
       const ativoRaw=row['Ativo']||row['ativo'];
@@ -2727,7 +2737,8 @@ function processarArquivoImport(input){
     const btnConf=document.getElementById('btn-confirmar-import');
     previewEl.style.display='';
     titleEl.textContent=importData.length+' aluno'+(importData.length!==1?'s':'')+' encontrado'+(importData.length!==1?'s':'');
-    listEl.innerHTML=importData.length?importData.map(a=>`<div style="padding:4px 0;border-bottom:0.5px solid var(--border);">${a.nome} · ${a.plano} · ${a.prof||'Sem professor'}</div>`).join(''):'<div style="color:var(--text-secondary);">Nenhum aluno válido encontrado.</div>';
+    const planoNome=dur=>{const p=planos.find(x=>x.duracao===dur);return p?p.nome+' ('+dur+')':dur||'—'};
+    listEl.innerHTML=importData.length?importData.map(a=>`<div style="padding:4px 0;border-bottom:0.5px solid var(--border);">${a.nome} · <span style="color:var(--text-secondary)">${planoNome(a.plano)}</span> · ${a.prof||'Sem professor'}</div>`).join(''):'<div style="color:var(--text-secondary);">Nenhum aluno válido encontrado.</div>';
     errosEl.innerHTML=erros.length?erros.join('<br>'):'';
     btnConf.style.display=importData.length>0?'inline-flex':'none';
   };
