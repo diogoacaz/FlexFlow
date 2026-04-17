@@ -939,8 +939,8 @@ const MES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','De
 const MESES_FULL=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const avCores=['av-b','av-t','av-p','av-c'];
 
-function getPlanoPreco(duracao){
-  const p=planos.find(x=>x.duracao===duracao);
+function getPlanoPreco(plano){
+  const p=planos.find(x=>x.nome===plano)||planos.find(x=>x.duracao===plano);
   return p?p.valor:350;
 }
 
@@ -1102,7 +1102,7 @@ function updatePlanChart(){
   const legendEl=document.getElementById('dash-plano-legend');
   if(!canvas)return;
   const cores=['#378ADD','#7F77DD','#1D9E75','#F5A623','#E24B4A','#888780'];
-  const dados=planos.map(p=>alunos.filter(a=>a.plano===p.duracao).length);
+  const dados=planos.map(p=>alunos.filter(a=>a.plano===p.nome||a.plano===p.duracao).length);
   const total=dados.reduce((s,v)=>s+v,0)||1;
   if(planChart){planChart.data.labels=planos.map(p=>p.nome);planChart.data.datasets[0].data=dados;planChart.update();}
   if(legendEl)legendEl.innerHTML=planos.map((p,i)=>{const pct=Math.round(dados[i]/total*100);return `<span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:${cores[i%cores.length]};display:inline-block;"></span>${p.nome} ${pct}%</span>`;}).join('');
@@ -1121,7 +1121,7 @@ function renderAlunos(lista){
     const matricula=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
     return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
-      <td>${a.plano}</td>
+      <td>${(planos.find(x=>x.nome===a.plano)||planos.find(x=>x.duracao===a.plano))?.nome||a.plano}</td>
       <td>R$ ${valor.toLocaleString('pt-BR')}</td>
       <td>${a.prof}</td>
       <td>${matricula}</td>
@@ -1145,7 +1145,8 @@ function showAlunoDetalhe(idx){
   document.getElementById('det-badges').innerHTML=
     `<span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span>`;
   const valorAluno=getPlanoPreco(a.plano);
-  document.getElementById('det-plano').textContent=a.plano||'—';
+  const pObj=planos.find(x=>x.nome===a.plano)||planos.find(x=>x.duracao===a.plano);
+  document.getElementById('det-plano').textContent=pObj?pObj.nome:(a.plano||'—');
   document.getElementById('det-valor').textContent='R$ '+valorAluno.toLocaleString('pt-BR');
   document.getElementById('det-prof').textContent=a.prof||'—';
   document.getElementById('det-matricula').textContent=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
@@ -1697,7 +1698,7 @@ function showPlanoDetalhe(idx){
   document.getElementById('pldet-desc').textContent=p.desc||'—';
   document.getElementById('pldet-duracao').textContent=p.duracao;
   document.getElementById('pldet-aulas').textContent=p.aulasSemanais||'—';
-  const alunosDoPlan=alunos.filter(a=>a.plano===p.duracao);
+  const alunosDoPlan=alunos.filter(a=>a.plano===p.nome||a.plano===p.duracao);
   document.getElementById('pldet-alunos-count').textContent=alunosDoPlan.length;
   document.getElementById('pldet-alunos-list').innerHTML=alunosDoPlan.length?
     alunosDoPlan.map(a=>{
@@ -1723,14 +1724,15 @@ function autoFillValorAluno(valId,sel){
   const v=opt.dataset.valor;
   if(v!==undefined){const el=document.getElementById(valId);if(el)el.value=v;}
 }
-function syncPlanoSelects(selDuracao){
+function syncPlanoSelects(selPlano){
   ['in-plano','ed-plano'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    const cur=selDuracao!==undefined?selDuracao:el.value;
+    const cur=selPlano!==undefined?selPlano:el.value;
     el.innerHTML=planos.map(p=>{
       const tipo=p.duracao.includes('Trimestral')?'Trimestral':p.duracao.includes('Semestral')?'Semestral':p.duracao.includes('Anual')?'Anual':p.duracao==='1 aula'?'Avulsa':'Mensal';
-      return `<option value="${p.duracao}" data-valor="${p.valor}"${p.duracao===cur?' selected':''}>${p.nome} · ${tipo}</option>`;
+      const sel=(p.nome===cur||p.duracao===cur)?' selected':'';
+      return `<option value="${p.nome}" data-valor="${p.valor}"${sel}>${p.nome} · ${tipo}</option>`;
     }).join('');
   });
 }
@@ -1739,7 +1741,7 @@ function renderPlanos(){
   if(!grid)return;
   grid.innerHTML=planos.map((p,i)=>{
     const duracaoLabel={'Mensal':'/mês','Trimestral':'/3 meses','Semestral':'/6 meses','Anual':'/ano'}[p.duracao]||'';
-    const alunosCount=alunos.filter(a=>a.plano===p.duracao).length;
+    const alunosCount=alunos.filter(a=>a.plano===p.nome||a.plano===p.duracao).length;
     return `<div class="card" style="cursor:pointer;${i===0?'border:2px solid #378add;':''}" onclick="showPlanoDetalhe(${i})">
       ${i===0?'<div class="badge bb" style="margin-bottom:10px;">Mais popular</div>':''}
       <div style="font-size:15px;font-weight:600;margin-bottom:4px;">${p.nome}</div>
