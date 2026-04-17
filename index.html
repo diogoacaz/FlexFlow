@@ -1435,7 +1435,8 @@ function addAluno(){
   const estado=document.getElementById('in-estado').value.trim();
   const municipio=document.getElementById('in-municipio').value.trim();
   const bairro=document.getElementById('in-bairro').value.trim();
-  const plano=document.getElementById('in-plano').value;
+  const planoIdx=parseInt(document.getElementById('in-plano').value);
+  const plano=(planos[planoIdx]||planos[0]||{nome:''}).nome;
   const prof=document.getElementById('in-prof').value;
   const valorInputRaw=parseFloat(document.getElementById('in-valor').value);
   const valorMensal=isNaN(valorInputRaw)?null:valorInputRaw;
@@ -1502,7 +1503,8 @@ function saveEditAluno(){
   a.estado=document.getElementById('ed-estado').value.trim();
   a.municipio=document.getElementById('ed-municipio').value.trim();
   a.bairro=document.getElementById('ed-bairro').value.trim();
-  a.plano=document.getElementById('ed-plano').value;
+  const edPlanoIdx=parseInt(document.getElementById('ed-plano').value);
+  a.plano=(planos[edPlanoIdx]||planos[0]||{nome:''}).nome;
   a.prof=document.getElementById('ed-prof').value;
   const valorEdit=parseFloat(document.getElementById('ed-valor').value);
   a.valorMensal=isNaN(valorEdit)?null:valorEdit;
@@ -1719,8 +1721,8 @@ function showPlanoDetalhe(idx){
 }
 
 function autoFillValorAluno(valId,sel){
-  const nome=sel.value;
-  const p=planos.find(x=>x.nome===nome);
+  const idx=parseInt(sel.value);
+  const p=isNaN(idx)?null:planos[idx];
   if(!p)return;
   const el=document.getElementById(valId);
   if(el)el.value=p.valor;
@@ -1729,12 +1731,12 @@ function syncPlanoSelects(selPlano){
   ['in-plano','ed-plano'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    const cur=selPlano!==undefined?selPlano:el.value;
-    el.innerHTML=planos.map(p=>{
-      const tipo=p.duracao.includes('Trimestral')?'Trimestral':p.duracao.includes('Semestral')?'Semestral':p.duracao.includes('Anual')?'Anual':p.duracao==='1 aula'?'Avulsa':'Mensal';
-      const sel=(p.nome===cur||p.duracao===cur)?' selected':'';
-      return `<option value="${p.nome}" data-valor="${p.valor}"${sel}>${p.nome} · ${tipo}</option>`;
-    }).join('');
+    const selIdx=selPlano!==undefined
+      ?planos.findIndex(p=>p.nome===selPlano||p.duracao===selPlano)
+      :parseInt(el.value)||0;
+    el.innerHTML=planos.map((p,i)=>
+      `<option value="${i}"${i===selIdx?' selected':''}>${p.nome}</option>`
+    ).join('');
   });
 }
 function renderPlanos(){
