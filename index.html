@@ -897,7 +897,7 @@
 <div class="overlay" id="modal-importar-alunos">
   <div class="modal">
     <div class="modal-title">Importar alunos por planilha</div>
-    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">Faça upload de uma planilha Excel (.xlsx) ou CSV.<br>Use o modelo abaixo para garantir o formato correto.</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">Faça upload de uma planilha Excel (.xlsx) ou CSV.<br>Use o modelo abaixo para garantir o formato correto. O campo <b>Plano</b> deve conter exatamente o texto da coluna Plano do modelo.</div>
     <div style="margin-bottom:16px;"><button class="btn btn-s" onclick="downloadTemplate()">&#8595; Baixar planilha modelo</button></div>
     <div class="fg"><label class="fl">Selecionar arquivo (.xlsx ou .csv)</label><input type="file" id="import-file" class="fi" accept=".xlsx,.xls,.csv" onchange="processarArquivoImport(this)" style="cursor:pointer;"></div>
     <div id="import-preview" style="display:none;margin-top:12px;">
@@ -2618,13 +2618,29 @@ function buildRelatorioCharts(){
 let importData=[];
 
 function downloadTemplate(){
-  const bom='\uFEFF';
-  const headers='Nome,Telefone,CPF,Email,CEP,Logradouro,Numero,Complemento,Bairro,Municipio,Estado,Plano,Professor,DataInicio,Ativo';
-  const ex='Maria Oliveira,(21) 99999-0001,000.000.000-01,maria@email.com,20040-020,Rua das Flores,123,,Centro,Rio de Janeiro,RJ,Mensal,Mariana Silva,2025-06-01,true';
-  const blob=new Blob([bom+headers+'\n'+ex],{type:'text/csv;charset=utf-8;'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='modelo_importacao_alunos.csv';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  const profNome=professores[0]?professores[0].nome:'Professor';
+  const nomeEx=['Maria Oliveira','João Silva','Ana Costa','Pedro Lima','Carla Souza','Lucas Mendes','Fernanda Reis','Rafael Duarte','Juliana Melo','Bruno Costa'];
+  const header=['Nome','Telefone','CPF','Email','CEP','Logradouro','Numero','Complemento','Bairro','Municipio','Estado','Plano','Valor (R$)','Professor','DataInicio','Ativo'];
+  const aoas=[header];
+  planos.forEach((p,i)=>{
+    aoas.push([
+      nomeEx[i%nomeEx.length],
+      '(11) 9'+String(8000+i).padStart(4,'0')+'-000'+((i%9)+1),
+      '000.000.000-'+String(i+1).padStart(2,'0'),
+      'aluno'+(i+1)+'@email.com',
+      '01310-100','Av. Paulista',String(100*(i+1)),'','Bela Vista','São Paulo','SP',
+      p.duracao,
+      p.valor,
+      profNome,
+      '2026-04-01',
+      'true'
+    ]);
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(aoas);
+  ws['!cols']=[{wch:20},{wch:16},{wch:15},{wch:24},{wch:10},{wch:18},{wch:8},{wch:12},{wch:12},{wch:14},{wch:4},{wch:15},{wch:11},{wch:18},{wch:12},{wch:6}];
+  XLSX.utils.book_append_sheet(wb,ws,'Alunos');
+  XLSX.writeFile(wb,'modelo_importacao_alunos.xlsx');
 }
 
 function processarArquivoImport(input){
@@ -2655,7 +2671,7 @@ function processarArquivoImport(input){
     rows.forEach((row,i)=>{
       const nome=(row['Nome']||row['nome']||'').trim();
       if(!nome){erros.push('Linha '+(i+2)+': nome vazio — ignorado.');return;}
-      const plano=(row['Plano']||row['plano']||'Mensal').trim();
+      const plano=(row['Plano']||row['plano']||(planos[0]?planos[0].duracao:'')).trim();
       const prof=(row['Professor']||row['professor']||(professores[0]?professores[0].nome:'')).trim();
       const inicio=(row['DataInicio']||row['Data Inicio']||'').trim();
       const ativoRaw=(row['Ativo']||row['ativo']||'true').trim().toLowerCase();
