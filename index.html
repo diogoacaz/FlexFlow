@@ -1987,8 +1987,8 @@ function addAluno(){
 
 function editarAluno(idx){
   const a=alunos[idx];
-  syncPlanoSelects();
-  syncProfSelects();
+  syncPlanoSelects(a.plano);
+  syncProfSelects(a.prof);
   document.getElementById('ed-idx').value=idx;
   document.getElementById('ed-nome').value=a.nome||'';
   document.getElementById('ed-tel').value=a.tel||'';
@@ -2001,9 +2001,7 @@ function editarAluno(idx){
   document.getElementById('ed-estado').value=a.estado||'';
   document.getElementById('ed-municipio').value=a.municipio||'';
   document.getElementById('ed-bairro').value=a.bairro||'';
-  document.getElementById('ed-plano').value=a.plano;
   document.getElementById('ed-valor').value=a.valorMensal||getPlanoPreco(a.plano)||'';
-  document.getElementById('ed-prof').value=a.prof;
   document.getElementById('ed-inicio').value=a.inicio||'';
   document.getElementById('ed-ativo').value=a.ativo!==false?'true':'false';
   openModal('modal-editar-aluno');
@@ -2138,9 +2136,13 @@ function showProfessorDetalhe(idx){
     :'<div style="font-size:13px;color:var(--text-secondary);padding:8px 0;">Nenhum aluno atribuído</div>';
   showPage('professor-detalhe');
 }
-function syncProfSelects(){
-  const opts=professores.map(p=>`<option>${p.nome}</option>`).join('');
-  ['in-prof','ed-prof'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+function syncProfSelects(selNome){
+  ['in-prof','ed-prof'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=selNome!==undefined?selNome:el.value;
+    el.innerHTML=professores.map(p=>`<option${p.nome===cur?' selected':''}>${p.nome}</option>`).join('');
+  });
 }
 function renderProfessores(){
   const grid=document.getElementById('professores-grid');
@@ -2324,12 +2326,16 @@ function autoFillValorAluno(valId,sel){
   const p=planos.find(x=>x.duracao===sel.value);
   if(p){const el=document.getElementById(valId);if(el)el.value=p.valor;}
 }
-function syncPlanoSelects(){
-  const opts=planos.map(p=>{
-    const tipo=p.duracao.includes('Trimestral')?'Trimestral':p.duracao.includes('Semestral')?'Semestral':p.duracao.includes('Anual')?'Anual':p.duracao==='1 aula'?'Avulsa':'Mensal';
-    return `<option value="${p.duracao}">${p.nome} · ${tipo} — R$ ${p.valor.toLocaleString('pt-BR')}</option>`;
-  }).join('');
-  ['in-plano','ed-plano'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+function syncPlanoSelects(selDuracao){
+  ['in-plano','ed-plano'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=selDuracao!==undefined?selDuracao:el.value;
+    el.innerHTML=planos.map(p=>{
+      const tipo=p.duracao.includes('Trimestral')?'Trimestral':p.duracao.includes('Semestral')?'Semestral':p.duracao.includes('Anual')?'Anual':p.duracao==='1 aula'?'Avulsa':'Mensal';
+      return `<option value="${p.duracao}"${p.duracao===cur?' selected':''}>${p.nome} · ${tipo}</option>`;
+    }).join('');
+  });
 }
 function renderPlanos(){
   const grid=document.getElementById('planos-grid');
