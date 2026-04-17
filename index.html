@@ -2638,6 +2638,11 @@ function downloadTemplate(){
   });
   const wb=XLSX.utils.book_new();
   const ws=XLSX.utils.aoa_to_sheet(aoas);
+  // Force DataInicio column (index 14) as string to prevent Excel auto-converting to date type
+  for(let r=1;r<aoas.length;r++){
+    const addr=XLSX.utils.encode_cell({r,c:14});
+    if(ws[addr])ws[addr]={t:'s',v:ws[addr].v};
+  }
   ws['!cols']=[{wch:20},{wch:16},{wch:15},{wch:24},{wch:10},{wch:18},{wch:8},{wch:12},{wch:12},{wch:14},{wch:4},{wch:15},{wch:11},{wch:18},{wch:12},{wch:6}];
   XLSX.utils.book_append_sheet(wb,ws,'Alunos');
   XLSX.writeFile(wb,'modelo_importacao_alunos.xlsx');
@@ -2645,10 +2650,12 @@ function downloadTemplate(){
 
 function _parseDateImport(val){
   if(val===null||val===undefined||val==='')return null;
-  // Excel serial number (date stored as number)
-  if(typeof val==='number'){
-    const d=new Date(Math.round((val-25569)*86400000));
-    return isNaN(d)?null:d;
+  // Date object returned by XLSX with cellDates option
+  if(val instanceof Date)return isNaN(val.getTime())?null:val;
+  // Excel numeric serial — convert via UTC to avoid timezone shift
+  if(typeof val==='number'&&val>0){
+    const utc=new Date(Math.round((val-25569)*86400000));
+    return new Date(utc.getUTCFullYear(),utc.getUTCMonth(),utc.getUTCDate());
   }
   const s=String(val).trim();
   if(!s)return null;
@@ -2656,12 +2663,11 @@ function _parseDateImport(val){
   const br=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if(br){
     let y=parseInt(br[3]);if(y<100)y+=2000;
-    const d=new Date(y,parseInt(br[2])-1,parseInt(br[1]));
-    return isNaN(d)?null:d;
+    return new Date(y,parseInt(br[2])-1,parseInt(br[1]));
   }
   // YYYY-MM-DD
   const iso=new Date(s+'T00:00:00');
-  return isNaN(iso)?null:iso;
+  return isNaN(iso.getTime())?null:iso;
 }
 
 function processarArquivoImport(input){
