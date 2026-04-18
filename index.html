@@ -195,6 +195,9 @@
     #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
     #tbl-alunos th:nth-child(5), #tbl-alunos td:nth-child(5),
     #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
+    /* Pagamentos mobile: cards em vez de tabela */
+    #tbl-pagamentos { display: none; }
+    #pagamentos-cards { display: block !important; }
     /* Dashboard: 3 columns even on mobile */
     #page-dashboard .g3 { grid-template-columns: repeat(3, 1fr); gap: 6px; }
     #page-dashboard .g3 .mc { padding: 9px 8px; }
@@ -422,6 +425,7 @@
             <thead><tr><th style="width:35%">Aluno</th><th style="width:20%">Valor</th><th style="width:20%">Vencimento</th><th style="width:25%">Status</th></tr></thead>
             <tbody id="pagamentos-body"></tbody>
           </table>
+          <div id="pagamentos-cards" style="display:none;"></div>
         </div>
       </div>
 
@@ -1743,15 +1747,32 @@ function navFluxoMes(dir){
 }
 
 function renderPagamentos(lista){
-  document.getElementById('pagamentos-body').innerHTML=lista.map(p=>{
+  const rows=lista.map(p=>{
     const ri=pagamentos.indexOf(p);
-    return `<tr style="cursor:pointer;" onclick="showPagamentoDetalhe(${ri})">
+    const sc=p.status==='pago'?'bg':p.status==='pendente'?'ba':'br';
+    const sl=p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado';
+    return {ri,p,sc,sl};
+  });
+  document.getElementById('pagamentos-body').innerHTML=rows.map(({ri,p,sc,sl})=>
+    `<tr style="cursor:pointer;" onclick="showPagamentoDetalhe(${ri})">
       <td>${p.aluno}</td>
       <td>${p.valor}</td>
       <td style="color:var(--text-secondary);font-size:13px;">${p.venc||'—'}</td>
-      <td><span class="badge ${p.status==='pago'?'bg':p.status==='pendente'?'ba':'br'}">${p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado'}</span></td>
-    </tr>`;
-  }).join('');
+      <td><span class="badge ${sc}">${sl}</span></td>
+    </tr>`
+  ).join('');
+  document.getElementById('pagamentos-cards').innerHTML=rows.map(({ri,p,sc,sl})=>
+    `<div onclick="showPagamentoDetalhe(${ri})" style="padding:12px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${p.aluno}</div>
+        <span class="badge ${sc}" style="flex-shrink:0;">${sl}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:13px;">
+        <span style="color:var(--text-secondary);">Venc. ${p.venc||'—'}</span>
+        <span style="font-weight:600;">${p.valor}</span>
+      </div>
+    </div>`
+  ).join('');
 }
 
 function marcarPago(idx){
