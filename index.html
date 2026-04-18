@@ -190,11 +190,9 @@
     .tab-btns { flex-wrap: wrap; }
     .export-card { flex-direction: column; align-items: flex-start; gap: 10px; }
     .hist-line { flex-wrap: wrap; gap: 4px; }
-    /* Alunos mobile: só Nome e Valor */
-    #tbl-alunos th:nth-child(2), #tbl-alunos td:nth-child(2),
-    #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
-    #tbl-alunos th:nth-child(5), #tbl-alunos td:nth-child(5),
-    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
+    /* Alunos mobile: cards em vez de tabela */
+    #tbl-alunos { display: none; }
+    #alunos-cards { display: block !important; }
     /* Pagamentos mobile: cards em vez de tabela */
     #tbl-pagamentos { display: none; }
     #pagamentos-cards { display: block !important; }
@@ -378,6 +376,7 @@
             <thead><tr><th style="width:24%">Aluno</th><th style="width:14%">Plano</th><th style="width:12%">Valor</th><th style="width:20%">Professor</th><th style="width:14%">Matrícula</th><th style="width:16%">Situação</th></tr></thead>
             <tbody id="alunos-body"></tbody>
           </table>
+          <div id="alunos-cards" style="display:none;"></div>
         </div>
       </div>
 
@@ -1626,20 +1625,37 @@ function syncPagAluno(){
 }
 
 function renderAlunos(lista){
-  document.getElementById('alunos-body').innerHTML=lista.map(a=>{
+  const items=lista.map(a=>{
     const i=alunos.indexOf(a);
     const ativo=a.ativo!==false;
     const valor=a.valorMensal||getPlanoPreco(a.plano);
     const matricula=a.inicio?new Date(a.inicio+'T00:00:00').toLocaleDateString('pt-BR'):'—';
-    return `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
+    const planNome=(planos.find(x=>x.nome===a.plano)||planos.find(x=>x.duracao===a.plano))?.nome||a.plano||'—';
+    return {i,a,ativo,valor,matricula,planNome};
+  });
+  document.getElementById('alunos-body').innerHTML=items.map(({i,a,ativo,valor,matricula,planNome})=>
+    `<tr style="cursor:pointer;" onclick="showAlunoDetalhe(${i})">
       <td><div class="row-fx"><div class="av ${a.cor}">${a.ini}</div>${a.nome}</div></td>
-      <td>${planos.find(x=>x.duracao===a.plano)?.nome||a.plano}</td>
+      <td>${planNome}</td>
       <td>R$ ${valor.toLocaleString('pt-BR')}</td>
       <td>${a.prof}</td>
       <td>${matricula}</td>
       <td><span class="badge ${ativo?'bg':'br'}">${ativo?'Ativo':'Inativo'}</span></td>
-    </tr>`;
-  }).join('');
+    </tr>`
+  ).join('');
+  document.getElementById('alunos-cards').innerHTML=items.map(({i,a,ativo,valor,planNome})=>
+    `<div onclick="showAlunoDetalhe(${i})" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;">
+      <div class="av ${a.cor}" style="width:40px;height:40px;font-size:15px;flex-shrink:0;">${a.ini}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.nome}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${planNome}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:14px;font-weight:600;">R$ ${valor.toLocaleString('pt-BR')}</div>
+        <span class="badge ${ativo?'bg':'br'}" style="font-size:11px;margin-top:3px;display:inline-block;">${ativo?'Ativo':'Inativo'}</span>
+      </div>
+    </div>`
+  ).join('');
   syncPagAluno();
 }
 
