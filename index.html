@@ -190,10 +190,11 @@
     .tab-btns { flex-wrap: wrap; }
     .export-card { flex-direction: column; align-items: flex-start; gap: 10px; }
     .hist-line { flex-wrap: wrap; gap: 4px; }
-    /* Hide less important columns on mobile */
-    #tbl-alunos th:nth-child(3), #tbl-alunos td:nth-child(3),
+    /* Alunos mobile: só Nome e Valor */
+    #tbl-alunos th:nth-child(2), #tbl-alunos td:nth-child(2),
     #tbl-alunos th:nth-child(4), #tbl-alunos td:nth-child(4),
-    #tbl-alunos th:nth-child(5), #tbl-alunos td:nth-child(5) { display: none; }
+    #tbl-alunos th:nth-child(5), #tbl-alunos td:nth-child(5),
+    #tbl-alunos th:nth-child(6), #tbl-alunos td:nth-child(6) { display: none; }
     /* Dashboard: 3 columns even on mobile */
     #page-dashboard .g3 { grid-template-columns: repeat(3, 1fr); gap: 6px; }
     #page-dashboard .g3 .mc { padding: 9px 8px; }
