@@ -1965,7 +1965,15 @@ const pages=['dashboard','alunos','professores','planos','pagamentos','fluxo','r
 const titles={dashboard:'Dashboard',alunos:'Alunos',professores:'Professores',planos:'Planos',pagamentos:'Pagamentos',fluxo:'Fluxo de caixa',relatorios:'Relatórios',historico:'Histórico do aluno','aluno-detalhe':'Ficha do aluno','professor-detalhe':'Ficha do professor','plano-detalhe':'Ficha do plano','pagamento-detalhe':'Registro de pagamento',notificacoes:'Notificações',exportar:'Exportar dados',configuracoes:'Configurações',repasses:'Repasses'};
 const navPages=['dashboard','alunos','professores','planos','pagamentos','fluxo','relatorios','notificacoes','exportar','configuracoes'];
 
+function resetViewportZoom(){
+  const m=document.querySelector('meta[name="viewport"]');
+  if(!m)return;
+  m.content='width=device-width, initial-scale=1.0, maximum-scale=1.0';
+  setTimeout(()=>{m.content='width=device-width, initial-scale=1.0';},100);
+}
+
 function showPage(p){
+  resetViewportZoom();
   pages.forEach(x=>document.getElementById('page-'+x).classList.toggle('hidden',x!==p));
   document.querySelectorAll('.ni').forEach((el,i)=>el.classList.toggle('active',navPages[i]===p));
   document.querySelectorAll('.bn').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
