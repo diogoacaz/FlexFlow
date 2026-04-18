@@ -1828,7 +1828,9 @@ function filterPag(f,btn){
   if(sumPrevEl)sumPrevEl.textContent='R$ '+previsto.toLocaleString('pt-BR');
   if(sumPagoEl)sumPagoEl.textContent='R$ '+pago.toLocaleString('pt-BR');
   if(sumPendEl)sumPendEl.textContent='R$ '+pendente.toLocaleString('pt-BR');
-  const lista=f==='todos'?doMes:doMes.filter(p=>p.status===f);
+  const lista=(f==='todos'?doMes:doMes.filter(p=>p.status===f))
+    .slice()
+    .sort((a,b)=>(parseInt((a.venc||'0').split('/')[0])||0)-(parseInt((b.venc||'0').split('/')[0])||0));
   renderPagamentos(lista);
 }
 
