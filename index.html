@@ -656,7 +656,7 @@
             <div class="fg"><label class="fl">Valor (R$)</label><input class="fi" id="pagdet-valor" type="number" step="0.01" placeholder="0"></div>
           </div>
           <div class="fr2">
-            <div class="fg"><label class="fl">Vencimento</label><input class="fi" id="pagdet-venc" type="date"></div>
+            <div class="fg"><label class="fl">Vencimento</label><div class="fi" id="pagdet-venc" style="background:var(--bg-secondary);pointer-events:none;display:flex;align-items:center;min-height:38px;"></div></div>
             <div class="fg"><label class="fl">Forma de pagamento</label><select class="fi" id="pagdet-forma"><option>PIX</option><option>Cartão de crédito</option><option>Cartão de débito</option><option>Dinheiro</option><option>Transferência</option><option>—</option></select></div>
           </div>
           <div class="fr2">
@@ -2501,13 +2501,8 @@ function showPagamentoDetalhe(idx){
   const planoNome=a2?((planos.find(x=>x.nome===a2.plano)||planos.find(x=>x.duracao===a2.plano))?.nome||a2.plano||'—'):(p.plano||'—');
   document.getElementById('pagdet-plano').textContent=planoNome;
   document.getElementById('pagdet-valor').value=parseValorNum(p.valor)||'';
-  // Derive vencRaw from venc + currentPagAno if not stored
-  let vencRaw=p.vencRaw||'';
-  if(!vencRaw&&p.venc&&p.venc!=='—'){
-    const parts=p.venc.split('/');
-    if(parts.length===2){const d=parts[0].padStart(2,'0'),m=parts[1].padStart(2,'0');vencRaw=`${currentPagAno}-${m}-${d}`;}
-  }
-  document.getElementById('pagdet-venc').value=vencRaw;
+  const alunoVenc=a?a.venc:null;
+  document.getElementById('pagdet-venc').textContent=(alunoVenc&&alunoVenc!=='—')?alunoVenc:(p.venc&&p.venc!=='—'?p.venc:'—');
   document.getElementById('pagdet-forma').value=p.forma||'—';
   document.getElementById('pagdet-status').value=p.status||'pendente';
   document.getElementById('pagdet-data-pag').value=p.dataPagRaw||'';
@@ -2529,16 +2524,13 @@ function savePagamentoDetalhe(){
   if(!valor){alert('Informe o valor.');return;}
   const alunoRec=alunos.find(x=>x.nome===pagamentos[idx].aluno);
   const plano=alunoRec?((planos.find(x=>x.nome===alunoRec.plano)||planos.find(x=>x.duracao===alunoRec.plano))?.nome||alunoRec.plano||pagamentos[idx].plano):pagamentos[idx].plano;
-  const vencRaw=document.getElementById('pagdet-venc').value;
+  const venc=(alunoRec&&alunoRec.venc&&alunoRec.venc!=='—')?alunoRec.venc:(pagamentos[idx].venc||'—');
   const forma=document.getElementById('pagdet-forma').value;
   const status=document.getElementById('pagdet-status').value;
   const dataPagRaw=document.getElementById('pagdet-data-pag').value;
   const oldStatus=pagamentos[idx].status;
-  let venc=pagamentos[idx].venc;
-  if(vencRaw){const d=new Date(vencRaw+'T00:00:00');venc=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
-  pagamentos[idx]={...pagamentos[idx],plano,valor:'R$ '+valor.toLocaleString('pt-BR'),venc,vencRaw,forma,status,dataPagRaw};
-  const a=alunos.find(x=>x.nome===pagamentos[idx].aluno);
-  if(a){a.status=status;a.venc=venc;}
+  pagamentos[idx]={...pagamentos[idx],plano,valor:'R$ '+valor.toLocaleString('pt-BR'),venc,forma,status,dataPagRaw};
+  if(alunoRec){alunoRec.status=status;}
   // Sync to fluxo when newly marked as paid
   if(status==='pago'&&oldStatus!=='pago'){
     const dataRawFinal=dataPagRaw||new Date().toISOString().split('T')[0];
