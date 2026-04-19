@@ -2501,8 +2501,7 @@ function showPagamentoDetalhe(idx){
   const planoNome=a2?((planos.find(x=>x.nome===a2.plano)||planos.find(x=>x.duracao===a2.plano))?.nome||a2.plano||'—'):(p.plano||'—');
   document.getElementById('pagdet-plano').textContent=planoNome;
   document.getElementById('pagdet-valor').value=parseValorNum(p.valor)||'';
-  const alunoVenc=a?a.venc:null;
-  document.getElementById('pagdet-venc').textContent=(alunoVenc&&alunoVenc!=='—')?alunoVenc:(p.venc&&p.venc!=='—'?p.venc:'—');
+  document.getElementById('pagdet-venc').textContent=(p.venc&&p.venc!=='—')?p.venc:'—';
   document.getElementById('pagdet-forma').value=p.forma||'—';
   document.getElementById('pagdet-status').value=p.status||'pendente';
   document.getElementById('pagdet-data-pag').value=p.dataPagRaw||'';
@@ -2524,13 +2523,13 @@ function savePagamentoDetalhe(){
   if(!valor){alert('Informe o valor.');return;}
   const alunoRec=alunos.find(x=>x.nome===pagamentos[idx].aluno);
   const plano=alunoRec?((planos.find(x=>x.nome===alunoRec.plano)||planos.find(x=>x.duracao===alunoRec.plano))?.nome||alunoRec.plano||pagamentos[idx].plano):pagamentos[idx].plano;
-  const venc=(alunoRec&&alunoRec.venc&&alunoRec.venc!=='—')?alunoRec.venc:(pagamentos[idx].venc||'—');
+  const venc=pagamentos[idx].venc||'—';
   const forma=document.getElementById('pagdet-forma').value;
   const status=document.getElementById('pagdet-status').value;
   const dataPagRaw=document.getElementById('pagdet-data-pag').value;
   const oldStatus=pagamentos[idx].status;
-  pagamentos[idx]={...pagamentos[idx],plano,valor:'R$ '+valor.toLocaleString('pt-BR'),venc,forma,status,dataPagRaw};
-  if(alunoRec){alunoRec.status=status;}
+  pagamentos[idx]={...pagamentos[idx],plano,valor:'R$ '+valor.toLocaleString('pt-BR'),forma,status,dataPagRaw};
+  if(alunoRec){alunoRec.status=status;alunoRec.venc=venc;}
   // Sync to fluxo when newly marked as paid
   if(status==='pago'&&oldStatus!=='pago'){
     const dataRawFinal=dataPagRaw||new Date().toISOString().split('T')[0];
