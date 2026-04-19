@@ -1767,26 +1767,28 @@ function navFluxoMes(dir){
 function renderPagamentos(lista){
   const rows=lista.map(p=>{
     const ri=pagamentos.indexOf(p);
+    const a=alunos.find(x=>x.nome===p.aluno);
     const sc=p.status==='pago'?'bg':p.status==='pendente'?'ba':'br';
     const sl=p.status==='pago'?'Pago':p.status==='pendente'?'Pendente':'Atrasado';
-    return {ri,p,sc,sl};
+    const vd=calcVencDisplay(p,a);
+    return {ri,p,sc,sl,vd};
   });
-  document.getElementById('pagamentos-body').innerHTML=rows.map(({ri,p,sc,sl})=>
+  document.getElementById('pagamentos-body').innerHTML=rows.map(({ri,p,sc,sl,vd})=>
     `<tr style="cursor:pointer;" onclick="showPagamentoDetalhe(${ri})">
       <td>${p.aluno}</td>
       <td>${p.valor}</td>
-      <td style="color:var(--text-secondary);font-size:13px;">${p.venc||'—'}</td>
+      <td style="color:var(--text-secondary);font-size:13px;">${vd}</td>
       <td><span class="badge ${sc}">${sl}</span></td>
     </tr>`
   ).join('');
-  document.getElementById('pagamentos-cards').innerHTML=rows.map(({ri,p,sc,sl})=>
+  document.getElementById('pagamentos-cards').innerHTML=rows.map(({ri,p,sc,sl,vd})=>
     `<div onclick="showPagamentoDetalhe(${ri})" style="padding:12px 14px;border-bottom:0.5px solid var(--border);cursor:pointer;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
         <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${p.aluno}</div>
         <span class="badge ${sc}" style="flex-shrink:0;">${sl}</span>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:13px;">
-        <span style="color:var(--text-secondary);">Venc. ${p.venc||'—'}</span>
+        <span style="color:var(--text-secondary);">Venc. ${vd}</span>
         <span style="font-weight:600;">${p.valor}</span>
       </div>
     </div>`
